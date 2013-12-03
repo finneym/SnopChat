@@ -6,7 +6,7 @@ package snopChat;
  * Name2: Max Finney StudentNumber2:12307451
  * Name3 StudentNumber3
  */
-
+//TESTING
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;

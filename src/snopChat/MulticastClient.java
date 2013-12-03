@@ -11,6 +11,8 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
+//testing one two three... testing
+
 /**
  * Client 
  * Skeleton code for Multicast client

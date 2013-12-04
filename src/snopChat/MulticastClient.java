@@ -6,12 +6,10 @@ package snopChat;
  * Name2: Max Finney StudentNumber2:12307451
  * Name3 StudentNumber3
  */
-//TESTING
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
-//testing one two three... testing
 
 /**
  * Client 
@@ -75,8 +73,7 @@ public class MulticastClient {
 		try {
 			
 			// send datagram to server - asking for date
-			packet = new DatagramPacket(msg.getBytes(),	msg.length(), 
-					address, port);
+			packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
 			socket.send(packet);
 			System.out.println("Send Msg");
 			
@@ -88,8 +85,7 @@ public class MulticastClient {
 				packet = new DatagramPacket(buffer, buffer.length);
 				socket.receive(packet);
 				buffer= packet.getData();
-				System.out.println("Received: " + 
-						new String(buffer, 0, packet.getLength()));
+				System.out.println("Received: " + new String(buffer, 0, packet.getLength()));
 				System.out.println("From: "+packet.getAddress()+":"+packet.getPort());
 			}
 			

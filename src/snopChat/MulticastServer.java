@@ -86,8 +86,7 @@ public class MulticastServer {
 					// send reply to everyone
 					msg = new Date().toString();
 					buffer = msg.getBytes();
-					packet = new DatagramPacket(buffer, buffer.length, 
-							address, port);
+					packet = new DatagramPacket(buffer, buffer.length, address, port);
 					System.out.println("Sending: " + new String(buffer));
 					socket.send(packet);
 				}

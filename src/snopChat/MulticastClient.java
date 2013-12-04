@@ -4,7 +4,7 @@ package snopChat;
 /**
  * Name1: Thea Johnson StudentNumber1:12307926
  * Name2: Max Finney StudentNumber2:12307451
- * Name3 StudentNumber3
+ * Name3 Yana Kulizhskaya StudentNumber3:12300762
  */
 import java.net.DatagramPacket;
 import java.net.InetAddress;

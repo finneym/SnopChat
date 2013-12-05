@@ -15,7 +15,7 @@ import java.net.MulticastSocket;
  * Client 
  * Skeleton code for Multicast client
  */
-public class MulticastClient {
+public class MulticastClient extends Thread{
 	
 	public static final String MCAST_ADDR = "230.0.0.1"; // hardcoded address for the multicast group
 	public static final int MCAST_PORT = 9013; // hardcoded port number for the multicast group

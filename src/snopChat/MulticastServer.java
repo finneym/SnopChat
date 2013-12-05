@@ -4,7 +4,7 @@ package snopChat;
 /**
  * Name1: Thea Johnson StudentNumber1:12307926
  * Name2 Max Finney StudentNumber2:12307451
- * Name3 StudentNumber3
+ * Name3 Yana Kulizhskaya StudentNumber3:12300762
  */
 
 import java.io.File;
@@ -18,7 +18,7 @@ import java.util.Date;
  * Server 
  * Skeleton code for Multicast server
  */
-public class MulticastServer {
+public class MulticastServer extends Thread{
 
 	public static final String MCAST_ADDR = "230.0.0.1";	// Hardcoded address for the multicast group
 	public static final int MCAST_PORT = 9013; 				// Hardcoded port number for the multicast group
@@ -93,25 +93,6 @@ public class MulticastServer {
 					socket.send(packet);
 				}
 			}
-			//Just part of the code to send a image without any protocols
-/*			File file = new File("input.jpg");
-			buffer = new byte[(int) file.length()];
-			FileInputStream fin = new FileInputStream(file);
-			int size = fin.read(buffer);
-			if (size==-1) throw new Exception("Problem with File Access");
-			System.out.println("File size: " + buffer.length + ", read: " + size);
-			byte[] data = new byte[(Integer.toString(size)).getBytes().length];
-			java.lang.System.arraycopy((Integer.toString(size)).getBytes(), 0, data, 0, (Integer.toString(size)).getBytes().length);		
-			packet = new DatagramPacket(data, data.length, dstAddress);
-			boolean sent = false;
-			socket.send(packet);			//Sends the length
-			try{
-				socket.setSoTimeout(100);
-				socket.receive(packet);
-			}catch(java.net.SocketTimeoutException e) {
-				System.out.println("No acknowledgement Received.");
-			}*/
-
 
 
 		} catch(Exception e) {

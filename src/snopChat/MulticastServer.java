@@ -70,29 +70,33 @@ public class MulticastServer extends Thread{
 	 * if a client sends a message that contains the string "Date?". 
 	 */
 	public void run() {
-		terminal.println("Testing");
+		//terminal.println("Testing");
 		DatagramPacket packet= null;
 		byte[] buffer= null;
 		String msg= null;
 
 		try {
 			while (true) {
-				System.out.println("Waiting");
+				//System.out.println("Waiting");
+				terminal.println("Waiting");
 
 				// receive message from client
 				buffer = new byte[MAX_BUFFER];
 				packet = new DatagramPacket(buffer, buffer.length);
 				socket.receive(packet);
 				msg= new String(buffer, 0, packet.getLength());
-				System.out.println("Received: " + msg);
-				System.out.println("From: "+packet.getAddress()+":"+packet.getPort());
+				//System.out.println("Received: " + msg);
+				//System.out.println("From: "+packet.getAddress()+":"+packet.getPort());
+				terminal.println("Received: " + msg);
+				terminal.println("From: "+packet.getAddress()+":"+packet.getPort());
 
 				if (msg.equalsIgnoreCase("Date?")) {
 					// send reply to everyone
 					msg = new Date().toString();
 					buffer = msg.getBytes();
 					packet = new DatagramPacket(buffer, buffer.length, address, port);
-					System.out.println("Sending: " + new String(buffer));
+					//System.out.println("Sending: " + new String(buffer));
+					terminal.println("Sending: " + new String(buffer));
 					socket.send(packet);
 				}
 				else if(msg.substring(0,4).equalsIgnoreCase("hello")) {
@@ -107,7 +111,8 @@ public class MulticastServer extends Thread{
 					}
 					if(inList==false){
 						nodeList.add(new Node(msg.substring(5, msg.length()),packet.getAddress(), packet.getPort()));		
-						System.out.println(msg.substring(5, msg.length()) + " was added");
+						//System.out.println(msg.substring(5, msg.length()) + " was added");		
+						terminal.println(msg.substring(5, msg.length()) + " was added");
 					}
 				}
 			}
@@ -131,7 +136,9 @@ public class MulticastServer extends Thread{
 		String address=null;
 		MulticastServer server=null;
 
-		System.out.println("Program start");
+	System.out.println("Program start");
+//		Terminal terminal =new Terminal();
+//		terminal.println("Program start");
 		try {
 			if (args.length==2) {
 				address= args[0];
@@ -149,6 +156,7 @@ public class MulticastServer extends Thread{
 			System.exit(-1);
 		}
 		System.out.println("Program end");
+//		terminal.println("program end");
 	}
 
 }

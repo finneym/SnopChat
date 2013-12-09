@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -24,7 +25,7 @@ public class MulticastServer extends Thread{
 	public static final int MCAST_PORT = 9013; 				// Hardcoded port number for the multicast group
 
 	public static final int MAX_BUFFER = 1024; 				// Maximum size for data in a packet
-
+	ArrayList<Node> nodeList;
 	MulticastSocket socket;
 	InetAddress address;
 	int port;
@@ -91,6 +92,21 @@ public class MulticastServer extends Thread{
 					packet = new DatagramPacket(buffer, buffer.length, address, port);
 					System.out.println("Sending: " + new String(buffer));
 					socket.send(packet);
+				}
+				else if(msg.substring(0,4).equalsIgnoreCase("hello")) {
+					// send intro to everyone
+					//msg.substring(5, msg.length()) is the name...hopefully
+					boolean inList = false;
+					for(int i = 0; i<nodeList.size(); i++){
+						if(nodeList.get(i).getName().equals(msg.substring(5, msg.length()))){
+							inList = true;
+							break;
+						}
+					}
+					if(inList==false){
+						nodeList.add(new Node(msg.substring(5, msg.length()),packet.getAddress(), packet.getPort()));		
+						System.out.println(msg.substring(5, msg.length()) + " was added");
+					}
 				}
 			}
 

@@ -6,6 +6,7 @@ package snopChat;
  * Name2: Max Finney StudentNumber2:12307451
  * Name3 Yana Kulizhskaya StudentNumber3:12300762
  */
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -95,6 +96,17 @@ public class MulticastClient extends Thread{
 		}
 	}
 	
+	public void sendMessage(String msg){
+		DatagramPacket packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
+		try {
+			socket.send(packet);
+			System.out.println("Sent - "+msg);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		
+	}
 	
 	/**
 	 * Main method

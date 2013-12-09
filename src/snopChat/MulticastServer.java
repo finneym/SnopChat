@@ -118,7 +118,7 @@ public class MulticastServer extends Thread{
 						}
 					}
 					if(inList==false){
-						nodeList.add(new Node(msg.substring(5, msg.length()),packet.getAddress(), packet.getPort()));		
+						nodeList.add(new Node(msg.substring(5, msg.length()),packet.getAddress().toString(), packet.getPort()));		
 						//System.out.println(msg.substring(5, msg.length()) + " was added");		
 						terminal.println(msg.substring(5, msg.length()) + " was added");
 					}

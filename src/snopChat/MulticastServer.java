@@ -55,6 +55,7 @@ public class MulticastServer extends Thread{
 			address = InetAddress.getByName(addr);
 			socket = new MulticastSocket(port);
 			socket.joinGroup(address);
+			terminal.setTitle("Server");
 		}
 		catch(Exception e) {
 			e.printStackTrace();

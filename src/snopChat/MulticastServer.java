@@ -6,7 +6,7 @@ package snopChat;
  * Name2 Max Finney StudentNumber2:12307451
  * Name3 Yana Kulizhskaya StudentNumber3:12300762
  */
-
+import tcdIO.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.DatagramPacket;
@@ -28,6 +28,7 @@ public class MulticastServer extends Thread{
 	ArrayList<Node> nodeList;
 	MulticastSocket socket;
 	InetAddress address;
+	Terminal terminal = new Terminal();
 	int port;
 
 	/**
@@ -69,6 +70,7 @@ public class MulticastServer extends Thread{
 	 * if a client sends a message that contains the string "Date?". 
 	 */
 	public void run() {
+		terminal.println("Testing");
 		DatagramPacket packet= null;
 		byte[] buffer= null;
 		String msg= null;

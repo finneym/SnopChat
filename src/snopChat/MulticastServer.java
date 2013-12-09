@@ -14,7 +14,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.Date;
-
+import tcdIO.*;
 /**
  * Server 
  * Skeleton code for Multicast server
@@ -28,7 +28,7 @@ public class MulticastServer extends Thread{
 	ArrayList<Node> nodeList;
 	MulticastSocket socket;
 	InetAddress address;
-	//Terminal terminal = new Terminal();
+	Terminal terminal = new Terminal();
 	int port;
 
 	/**
@@ -70,7 +70,7 @@ public class MulticastServer extends Thread{
 	 * if a client sends a message that contains the string "Date?". 
 	 */
 	public void run() {
-		//terminal.println("Testing");
+		terminal.println("Testing");
 		DatagramPacket packet= null;
 		byte[] buffer= null;
 		String msg= null;

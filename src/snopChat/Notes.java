@@ -8,4 +8,6 @@ should handel (ideally) two peers sending
 sender and receiver have to be able to work simultaniousely 
 can only receive one packet at a time, have to have other code to handel what packet is
 whenever it has an image it should send it out, should be able to have multiple senders sending images (sounds overcomplicated start with just one image sender then try increase)
+
+*Added in tcdio
 */

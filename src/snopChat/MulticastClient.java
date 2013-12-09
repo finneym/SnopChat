@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.SocketException;
+
 import tcdIO.*;
 
 /**
@@ -21,7 +23,9 @@ public class MulticastClient extends Thread{
 	public static final String MCAST_ADDR = "230.0.0.1"; // hardcoded address for the multicast group
 	public static final int MCAST_PORT = 9013; // hardcoded port number for the multicast group
 	
-	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet      
+	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet  
+	
+	static final int MTU = 1500; // thea from other project
 	
 	MulticastSocket socket;
 	InetAddress address;
@@ -97,6 +101,109 @@ public class MulticastClient extends Thread{
 			e.printStackTrace();
 			System.exit(-1);
 		}
+	}
+	
+	private void receiveThing(){
+		byte[] data;
+		DatagramPacket packet;
+		int size = 0;
+		byte seqNo;
+		Buffer[] buffers;
+		int portNum;
+		buffers = new Buffer[10];
+		boolean foundPortNum, allFin;
+		allFin=false;
+
+
+		terminal.println("Waiting for incoming packets");
+		while(!allFin){
+
+			try {
+				data= new byte[MTU+1];  // receive first packet with size of image as payload
+				packet= new DatagramPacket(data, data.length);
+
+				foundPortNum=false;
+				socket.receive(packet);
+				portNum = packet.getPort();
+				int bufferCount=0;
+				while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){
+					if(buffers[bufferCount]!=null){
+						if(buffers[bufferCount].getPortNum() == portNum){
+							foundPortNum=true;
+						}
+						else if(!foundPortNum){
+							bufferCount++;
+						}
+					}
+				}
+
+				if(!foundPortNum){
+
+					buffers[bufferCount]= new Buffer(packet.getPort());
+					seqNo = data[0];
+					data= packet.getData();// reserve buffer to receive image
+					terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum()+" "+ packet.getPort());
+					terminal.println("Received: " + new String(data, 0, packet.getLength()));
+					terminal.println("From: "+packet.getAddress()+":"+packet.getPort());
+					sendACK(seqNo, packet);
+
+					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){
+						size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();
+						terminal.println("Filesize:" + size +" sequence number "+seqNo);
+						buffers[bufferCount].createBuffer(size);
+						buffers[bufferCount].moveOnSeqNum();
+					}
+				}
+
+
+				else{
+					seqNo = data[0];
+					sendACK(seqNo, packet);
+					terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum() +"  "+ packet.getPort());
+
+					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){
+						terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + buffers[bufferCount].getCounter() + " - Payload: "+(packet.getLength()-1));
+						terminal.println("Received: " + new String(data, 0, packet.getLength()));
+						terminal.println("From: "+packet.getAddress()+":"+packet.getPort());	
+
+						buffers[bufferCount].copyIn(packet, data);
+						buffers[bufferCount].counterIncrease((packet.getLength()-1)) ;
+						buffers[bufferCount].moveOnSeqNum();
+					}
+
+					buffers[bufferCount].checkFin();
+
+				}
+			}
+
+			catch(java.lang.Exception e) {
+				e.printStackTrace();
+			}	
+			allFin=true;
+			for(int i=0; i<buffers.length && buffers[i]!=null; i++){
+				if(!buffers[i].getFin()){
+					allFin=false;
+				}
+			}
+		}
+		terminal.println("Program completed");	
+	}
+	
+	private void sendACK(byte seqNo, DatagramPacket revived){
+		byte[] ACK;
+		ACK = new byte[1];
+		DatagramPacket ACKpacket;
+		try {
+			ACK[0] = seqNo;
+			ACKpacket = new DatagramPacket(ACK, ACK.length, revived.getAddress(), revived.getPort());
+			socket.send(ACKpacket);
+			terminal.println("ACK "+seqNo+" sent " +"port " + ACKpacket.getPort());
+		} catch (SocketException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 	
 	public void sendMessage(String msg){

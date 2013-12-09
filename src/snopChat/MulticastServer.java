@@ -9,11 +9,14 @@ package snopChat;
 //import tcdIO.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Date;
+
 import tcdIO.*;
 /**
  * Server 
@@ -30,6 +33,10 @@ public class MulticastServer extends Thread{
 	InetAddress address;
 	Terminal terminal = new Terminal();
 	int port;
+	
+
+	static final int MTU = 1500; // thea from other project
+	static final String FILENAME = "image/input.jpg";
 
 	/**
 	 * Default Constructor
@@ -122,6 +129,94 @@ public class MulticastServer extends Thread{
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void sendThings(){
+		byte[] data= null;
+		byte[] data2= null;
+		DatagramPacket packet= null;
+
+		File file= null;
+		FileInputStream fin= null;
+		byte[] buffer= null;
+		int size;
+		int counter;
+		byte seqNo;
+		byte maxSeqNo = 15;
+
+		try {	
+			file= new File(FILENAME);				// Reserve buffer for length of file and read file
+			buffer= new byte[(int) file.length()];
+			fin= new FileInputStream(file);
+			size= fin.read(buffer);
+			if (size==-1) throw new Exception("Problem with File Access");
+			terminal.println("File size: " + buffer.length + ", read: " + size);
+
+			seqNo =0;
+			data= (Integer.toString(size)).getBytes();  // 1st packet contains the length only
+			data2 = new byte[data.length +1]; //create a new data array
+			data2[0] = seqNo; // add a sequence number to it
+			for(int i=1; i<data2.length; i++){ //copy old array into rest of new array
+				data2[i]=data[i-1];
+			}
+			packet= new DatagramPacket(data2, data2.length, address, port);
+			socket.send(packet);
+			recieveACK(seqNo, packet);
+
+			counter= 0;
+			do {
+				if(seqNo == maxSeqNo){
+					seqNo = 0;
+				}
+				else{
+					seqNo++;
+				}
+				data= new byte[(counter+MTU<size) ? MTU+1 : size-counter+1];  // The length of the packet is either MTU or a remainder
+				data[0]=seqNo;
+				java.lang.System.arraycopy(buffer, counter, data, 1, (data.length-1));
+				terminal.println("Counter: " + counter + " - Payload size: " + (data.length-1) +" sequence number: "+seqNo+" port " +socket.getLocalPort());
+
+				packet= new DatagramPacket(data, data.length, address, port);
+				socket.send(packet);
+				//recieveACK(seqNo, packet);
+				counter+= (data.length-1);
+			} while (counter<size);
+
+			terminal.println("\nSend complete"+" port " +socket.getLocalPort());
+		}
+		catch(java.lang.Exception e) {
+			e.printStackTrace();
+		}	
+	}
+	
+	
+	private boolean recieveACK(int ACKNum, DatagramPacket toSend){
+		boolean positiveACKRecieved = false;
+		byte[] ACK;
+		ACK = new byte[2];
+		DatagramPacket ACKpacket;
+		ACKpacket = new DatagramPacket(ACK, ACK.length);
+		try {
+			while(!positiveACKRecieved) {
+				try {
+					socket.setSoTimeout(100);
+					socket.receive(ACKpacket);
+					positiveACKRecieved = (ACK[0]== ACKNum);
+					if(positiveACKRecieved){
+						terminal.println("ACK: " + ACK[0] +" recieved"+" port " +socket.getLocalPort());
+					}
+				} catch (SocketTimeoutException e) {
+					terminal.println("Timed out: Still waiting for ACK: " + ACKNum+" port " +socket.getLocalPort());
+					socket.send(toSend);
+					terminal.println("packet " + ACKNum +" resent"+" port " +socket.getLocalPort());
+				}
+			}
+
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		return positiveACKRecieved;
 	}
 
 	/**

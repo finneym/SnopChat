@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-
+import tcdIO.*;
 
 /**
  * Client 
@@ -26,7 +26,7 @@ public class MulticastClient extends Thread{
 	MulticastSocket socket;
 	InetAddress address;
 	int port;
-	
+	Terminal terminal = new Terminal();
 	/**
 	 * Default Constructor
 	 * 
@@ -76,18 +76,20 @@ public class MulticastClient extends Thread{
 			// send datagram to server - asking for date
 			packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
 			socket.send(packet);
-			System.out.println("Send Msg");
-			
+			//System.out.println("Send Msg");
+			terminal.println("Send Msg");
 			// wait for incoming datagrams and print their content
 			while (true) {
-				System.out.println("Waiting");
-				
+				//System.out.println("Waiting");
+				terminal.println("Waiting");
 				buffer = new byte[MAX_BUFFER];
 				packet = new DatagramPacket(buffer, buffer.length);
 				socket.receive(packet);
 				buffer= packet.getData();
-				System.out.println("Received: " + new String(buffer, 0, packet.getLength()));
-				System.out.println("From: "+packet.getAddress()+":"+packet.getPort());
+				//System.out.println("Received: " + new String(buffer, 0, packet.getLength()));
+				//System.out.println("From: "+packet.getAddress()+":"+packet.getPort());
+				terminal.println("Received: " + new String(buffer, 0, packet.getLength()));
+				terminal.println("From: "+packet.getAddress()+":"+packet.getPort());
 			}
 			
 		} catch(Exception e) {
@@ -100,7 +102,8 @@ public class MulticastClient extends Thread{
 		DatagramPacket packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
 		try {
 			socket.send(packet);
-			System.out.println("Sent - "+msg);
+			//System.out.println("Sent - "+msg);
+			terminal.println("Sent - "+msg);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -116,6 +119,7 @@ public class MulticastClient extends Thread{
 	 * 				[1] Port number the client should send to
 	 */
 	public static void main(String[] args) {
+
 		int port= 0;
 		String address=null;
 		MulticastClient client=null;

@@ -33,7 +33,7 @@ public class MulticastServer extends Thread{
 	InetAddress address;
 	Terminal terminal = new Terminal();
 	int port;
-	
+
 
 	static final int MTU = 1500; // thea from other project
 	static final String FILENAME = "image/input.jpg";
@@ -69,7 +69,21 @@ public class MulticastServer extends Thread{
 			System.exit(-1);
 		}
 	}
-
+	
+	public Runnable sendMessage(String msg){
+		DatagramPacket packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
+		try {
+			socket.send(packet);
+			//System.out.println("Sent - "+msg);
+			terminal.println("Sent - "+msg);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return null;
+		
+	}
+	
 	/**
 	 * Run method
 	 *
@@ -109,16 +123,21 @@ public class MulticastServer extends Thread{
 				}
 				else if(msg.substring(0,5).equalsIgnoreCase("hello")) {
 					// send intro to everyone
-					//msg.substring(5, msg.length()) is the name...hopefully
+					//msg.substring(5, msg.length()) is the name of the Node...hopefully
+					
 					boolean inList = false;
-					for(int i = 0; i<nodeList.size(); i++){
-						if(nodeList.get(i).getName().equals(msg.substring(5, msg.length()))){
-							inList = true;
-							break;
+					if(nodeList!=null){
+						for(int i = 0; i<nodeList.size(); i++){
+							if(nodeList.get(i).getName().equals(msg.substring(5, msg.length()))){
+								inList = true;
+								break;
+							}
 						}
 					}
 					if(inList==false){
-						nodeList.add(new Node(msg.substring(5, msg.length()),packet.getAddress().toString(), packet.getPort()));		
+						terminal.println("name - "+ msg.substring(5,msg.length()) + "\naddress - "+packet.getAddress().toString()+"\nport -"+packet.getPort());
+						Thread.sleep(100000);
+						nodeList.add(new Node(msg.substring(5, msg.length()),packet.getAddress().toString().substring(1, packet.getAddress().toString().length()), packet.getPort()));		
 						//System.out.println(msg.substring(5, msg.length()) + " was added");		
 						terminal.println(msg.substring(5, msg.length()) + " was added");
 					}
@@ -130,7 +149,7 @@ public class MulticastServer extends Thread{
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void sendThings(){
 		byte[] data= null;
 		byte[] data2= null;
@@ -188,8 +207,8 @@ public class MulticastServer extends Thread{
 			e.printStackTrace();
 		}	
 	}
-	
-	
+
+
 	private boolean recieveACK(int ACKNum, DatagramPacket toSend){
 		boolean positiveACKRecieved = false;
 		byte[] ACK;
@@ -232,9 +251,9 @@ public class MulticastServer extends Thread{
 		String address=null;
 		MulticastServer server=null;
 
-	System.out.println("Program start");
-//		Terminal terminal =new Terminal();
-//		terminal.println("Program start");
+		System.out.println("Program start");
+		//		Terminal terminal =new Terminal();
+		//		terminal.println("Program start");
 		try {
 			if (args.length==2) {
 				address= args[0];
@@ -252,7 +271,7 @@ public class MulticastServer extends Thread{
 			System.exit(-1);
 		}
 		System.out.println("Program end");
-//		terminal.println("program end");
+		//		terminal.println("program end");
 	}
 
 }

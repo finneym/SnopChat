@@ -49,7 +49,19 @@ Buffer
 		delete file
 
 
+Jobs
+	get it sending message
 
+			-image
+	
+	intergrate flow control	
+	
+	getting hellos sending and receiving
+		-updating arrayList()
+
+	deletion stuff
+
+	
 
 
 

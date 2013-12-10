@@ -39,10 +39,10 @@ public class Node {
 	}
 	
 	public void introduce(){
-		Thread client = new Thread(mClient.sendMessage("hello"+getName()));
-		Thread server = new Thread(mServer);
-		client.start();
+		Thread server = new Thread(mServer.sendMessage("Test Message"));
+		Thread client = new Thread(mClient.receiveMessage());
 		server.start();
+		client.start();
 	}
 	
 	public void send(File file){

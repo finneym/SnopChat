@@ -206,12 +206,14 @@ public class MulticastClient extends Thread{
 
 	}
 	
-	public Runnable sendMessage(String msg){
-		DatagramPacket packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
+	public Runnable receiveMessage(){
+		byte[] buffer = new byte[MAX_BUFFER];
+		DatagramPacket packet = new DatagramPacket(buffer,	buffer.length, address, port);
 		try {
-			socket.send(packet);
+			socket.receive(packet);
+			String msg = new String(buffer, 0, packet.getLength());
 			//System.out.println("Sent - "+msg);
-			terminal.println("Sent - "+msg);
+			terminal.println("Received - "+msg);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);

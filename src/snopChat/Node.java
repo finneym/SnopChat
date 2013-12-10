@@ -39,8 +39,12 @@ public class Node {
 	}
 	
 	public void introduce(){
-		this.mClient.sendMessage(getName());
+		Thread client = new Thread(mClient.sendMessage("hello"+getName()));
+		Thread server = new Thread(mServer);
+		client.start();
+		server.start();
 	}
+	
 	public void send(File file){
 		Thread[] thread = new Thread[2];
 		thread[0] = new Thread(mServer);
@@ -53,16 +57,9 @@ public class Node {
 		return this.mName;
 	}
 	public static void main(String[] args) {
-
-		try {
-			Node test = new Node("Name", InetAddress.getByName("230.0.0.1"), 9013);
+			Node test = new Node();
 			File file = null;
 			test.introduce();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-
-		}
 	}
 }
 

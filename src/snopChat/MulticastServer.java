@@ -107,7 +107,7 @@ public class MulticastServer extends Thread{
 					terminal.println("Sending: " + new String(buffer));
 					socket.send(packet);
 				}
-				else if(msg.substring(0,4).equalsIgnoreCase("hello")) {
+				else if(msg.substring(0,5).equalsIgnoreCase("hello")) {
 					// send intro to everyone
 					//msg.substring(5, msg.length()) is the name...hopefully
 					boolean inList = false;

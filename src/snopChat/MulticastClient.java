@@ -206,7 +206,7 @@ public class MulticastClient extends Thread{
 
 	}
 	
-	public void sendMessage(String msg){
+	public Runnable sendMessage(String msg){
 		DatagramPacket packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
 		try {
 			socket.send(packet);
@@ -216,6 +216,7 @@ public class MulticastClient extends Thread{
 			e.printStackTrace();
 			System.exit(-1);
 		}
+		return null;
 		
 	}
 	

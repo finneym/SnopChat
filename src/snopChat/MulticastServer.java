@@ -197,7 +197,7 @@ public class MulticastServer extends Thread{
 
 				packet= new DatagramPacket(data, data.length, address, port);
 				socket.send(packet);
-				//recieveACK(seqNo, packet);
+				recieveACK(seqNo, packet);
 				counter+= (data.length-1);
 			} while (counter<size);
 

@@ -11,6 +11,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
 
 import tcdIO.*;
 
@@ -26,6 +27,8 @@ public class MulticastClient extends Thread{
 	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet  
 	
 	static final int MTU = 1500; // thea from other project
+	
+	ArrayList<Node> nodeList;
 	
 	MulticastSocket socket;
 	InetAddress address;
@@ -124,6 +127,23 @@ public class MulticastClient extends Thread{
 
 				foundPortNum=false;
 				socket.receive(packet);
+				String msg= new String(data, 0, packet.getLength());
+				if(msg.substring(0,5).equalsIgnoreCase("hello")){
+					// send intro to everyone
+					//msg.substring(5, msg.length()) is the name...hopefully
+					boolean inList = false;
+					for(int i = 0; i<nodeList.size(); i++){
+						if(nodeList.get(i).getName().equals(msg.substring(5, msg.length()))){
+							inList = true;
+							break;
+						}
+					}
+					if(inList==false){
+						nodeList.add(new Node(msg.substring(5, msg.length()),packet.getAddress().toString(), packet.getPort()));		
+						//System.out.println(msg.substring(5, msg.length()) + " was added");		
+						terminal.println(msg.substring(5, msg.length()) + " was added");
+					}
+				}
 				portNum = packet.getPort();
 				int bufferCount=0;
 				while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){

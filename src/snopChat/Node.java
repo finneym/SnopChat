@@ -53,13 +53,22 @@ public class Node {
 			thread[i].start();
 		}
 	}
+	public void send(){
+		Thread[] thread = new Thread[2];
+		thread[0] = new Thread(mServer);
+		thread[1] = new Thread(mClient);
+		for(int i = 0; i<thread.length;i++){
+			thread[i].start();
+		}
+	}
 	String getName(){
 		return this.mName;
 	}
 	public static void main(String[] args) {
 			Node test = new Node();
 			File file = null;
-			test.introduce();
+			//test.introduce();
+			test.send();
 	}
 }
 

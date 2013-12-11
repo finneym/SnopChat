@@ -20,16 +20,16 @@ import tcdIO.*;
  * Skeleton code for Multicast client
  */
 public class MulticastClient extends Thread{
-	
+
 	public static final String MCAST_ADDR = "230.0.0.1"; // hardcoded address for the multicast group
 	public static final int MCAST_PORT = 9013; // hardcoded port number for the multicast group
-	
+
 	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet  
-	
+
 	static final int MTU = 1500; // thea from other project
-	
+
 	ArrayList<Node> nodeList;
-	
+
 	MulticastSocket socket;
 	InetAddress address;
 	int port;
@@ -42,7 +42,7 @@ public class MulticastClient extends Thread{
 	public MulticastClient() {
 		this(MCAST_ADDR, MCAST_PORT);
 	}
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -65,8 +65,8 @@ public class MulticastClient extends Thread{
 			System.exit(-1);
 		}
 	}
-	
-	
+
+
 	/**
 	 * Run method
 	 *
@@ -75,12 +75,12 @@ public class MulticastClient extends Thread{
 	 * and prints the content of received datagrams.
 	 */
 	public void run(){
-		String msg = "Date?";
+		/*String msg = "Date?";
 		byte[] buffer;
 		DatagramPacket packet = null;
-		
+
 		try {
-			
+
 			// send datagram to server - asking for date
 			packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
 			socket.send(packet);
@@ -99,15 +99,16 @@ public class MulticastClient extends Thread{
 				terminal.println("Received: " + new String(buffer, 0, packet.getLength()));
 				terminal.println("From: "+packet.getAddress()+":"+packet.getPort());
 			}
-			
+
 		} catch(Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
-		}
+		}*/
+		receiveThing();
 	}
-	
+
 	private void receiveThing(){
-		byte[] data;
+		/*byte[] data;
 		DatagramPacket packet;
 		int size = 0;
 		byte seqNo;
@@ -144,55 +145,57 @@ public class MulticastClient extends Thread{
 						terminal.println(msg.substring(5, msg.length()) + " was added");
 					}
 				}
-				portNum = packet.getPort();
-				int bufferCount=0;
-				while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){
-					if(buffers[bufferCount]!=null){
-						if(buffers[bufferCount].getPortNum() == portNum){
-							foundPortNum=true;
-						}
-						else if(!foundPortNum){
-							bufferCount++;
-						}
-					}
-				}
-
-				if(!foundPortNum){
-
-					buffers[bufferCount]= new Buffer(packet.getPort());
-					seqNo = data[0];
-					data= packet.getData();// reserve buffer to receive image
-					terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum()+" "+ packet.getPort());
-					terminal.println("Received: " + new String(data, 0, packet.getLength()));
-					terminal.println("From: "+packet.getAddress()+":"+packet.getPort());
-					sendACK(seqNo, packet);
-
-					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){
-						size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();
-						terminal.println("Filesize:" + size +" sequence number "+seqNo);
-						buffers[bufferCount].createBuffer(size);
-						buffers[bufferCount].moveOnSeqNum();
-					}
-				}
-
-
 				else{
-					seqNo = data[0];
-					sendACK(seqNo, packet);
-					terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum() +"  "+ packet.getPort());
-
-					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){
-						terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + buffers[bufferCount].getCounter() + " - Payload: "+(packet.getLength()-1));
-						terminal.println("Received: " + new String(data, 0, packet.getLength()));
-						terminal.println("From: "+packet.getAddress()+":"+packet.getPort());	
-
-						buffers[bufferCount].copyIn(packet, data);
-						buffers[bufferCount].counterIncrease((packet.getLength()-1)) ;
-						buffers[bufferCount].moveOnSeqNum();
+					portNum = packet.getPort();
+					int bufferCount=0;
+					while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){
+						if(buffers[bufferCount]!=null){
+							if(buffers[bufferCount].getPortNum() == portNum){
+								foundPortNum=true;
+							}
+							else if(!foundPortNum){
+								bufferCount++;
+							}
+						}
 					}
 
-					buffers[bufferCount].checkFin();
+					if(!foundPortNum){
 
+						buffers[bufferCount]= new Buffer(packet.getPort());
+						seqNo = data[0];
+						data= packet.getData();// reserve buffer to receive image
+						terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum()+" "+ packet.getPort());
+						terminal.println("Received: " + new String(data, 0, packet.getLength()));
+						terminal.println("From: "+packet.getAddress()+":"+packet.getPort());
+						sendACK(seqNo, packet);
+
+						if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){
+							size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();
+							terminal.println("Filesize:" + size +" sequence number "+seqNo);
+							buffers[bufferCount].createBuffer(size);
+							buffers[bufferCount].moveOnSeqNum();
+						}
+					}
+
+
+					else{
+						seqNo = data[0];
+						sendACK(seqNo, packet);
+						terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum() +"  "+ packet.getPort());
+
+						if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){
+							terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + buffers[bufferCount].getCounter() + " - Payload: "+(packet.getLength()-1));
+							terminal.println("Received: " + new String(data, 0, packet.getLength()));
+							terminal.println("From: "+packet.getAddress()+":"+packet.getPort());	
+
+							buffers[bufferCount].copyIn(packet, data);
+							buffers[bufferCount].counterIncrease((packet.getLength()-1)) ;
+							buffers[bufferCount].moveOnSeqNum();
+						}
+
+						buffers[bufferCount].checkFin();
+
+					}
 				}
 			}
 
@@ -206,26 +209,110 @@ public class MulticastClient extends Thread{
 				}
 			}
 		}
-		terminal.println("Program completed");	
-	}
-	
-	private void sendACK(byte seqNo, DatagramPacket revived){
-		byte[] ACK;
-		ACK = new byte[1];
-		DatagramPacket ACKpacket;
-		try {
-			ACK[0] = seqNo;
-			ACKpacket = new DatagramPacket(ACK, ACK.length, revived.getAddress(), revived.getPort());
-			socket.send(ACKpacket);
-			terminal.println("ACK "+seqNo+" sent " +"port " + ACKpacket.getPort());
-		} catch (SocketException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		terminal.println("receive completed");	*/
+		byte[] data; 
+		DatagramPacket packet; 
+		int size = 0; 
+		byte seqNo;  
+		Buffer[] buffers; 
+		int portNum; 
+		buffers = new Buffer[10]; 
+		boolean foundPortNum, allFin; 
+		allFin=false; 
 
+
+		terminal.println("Waiting for incoming packets"); 
+		while(!allFin){  
+
+			try { 
+				data= new byte[MTU+1];  // receive first packet with size of image as payload 
+				packet= new DatagramPacket(data, data.length); 
+
+				foundPortNum=false; 
+				socket.receive(packet); 
+				portNum = packet.getPort(); 
+				int bufferCount=0; 
+				//check if one or more packets have being received from this port before
+				while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){ 
+					if(buffers[bufferCount]!=null){ 
+						if(buffers[bufferCount].getPortNum() == portNum){ 
+							foundPortNum=true; 
+						} 
+						else if(!foundPortNum){ 
+							bufferCount++; 
+						} 
+					} 
+				} 
+				//if no packet has being received before
+				if(!foundPortNum){ 
+					//create new instance of buffer
+					buffers[bufferCount]= new Buffer(packet.getPort()); 
+					seqNo = data[0]; 
+					data= packet.getData();// reserve buffer to receive image 
+					terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum()+" "+ packet.getPort());  
+					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ 
+						size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();  //add size
+						terminal.println("Filesize:" + size +" sequence number "+seqNo); 
+						buffers[bufferCount].createBuffer(size); 
+						buffers[bufferCount].moveOnSeqNum(); // move on the expected seq num
+					}
+					sendACK((byte)(buffers[bufferCount].getExpSeqNum()), packet); // send an ack for the next packet expected from this port
+				} 
+
+				//otherwise if a packet has being received
+				else{ 
+					seqNo = data[0];  
+					terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum() +"  "+ packet.getPort()); 
+					//if this packet is the next packet expected for this port add it to the array
+					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ 
+						terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + buffers[bufferCount].getCounter() + " - Payload: "+(packet.getLength()-1));    
+
+						buffers[bufferCount].copyIn(packet, data); 
+						buffers[bufferCount].counterIncrease((packet.getLength()-1)) ; 
+						buffers[bufferCount].moveOnSeqNum(); 
+						buffers[bufferCount].checkFin(); 
+					} 
+					sendACK((byte)(buffers[bufferCount].getExpSeqNum()), packet); //send an ack for the next packet expected
+
+
+				} 
+			} 
+
+			catch(java.lang.Exception e) { 
+				e.printStackTrace(); 
+			}    
+			allFin=true; 
+			for(int i=0; i<buffers.length && buffers[i]!=null; i++){ 
+				if(!buffers[i].getFin()){ 
+					allFin=false; 
+				} 
+			} 
+		} 
+		terminal.println("Program completed");
 	}
-	
+
+	/**
+	 * sends an ack to the port that it got the packet from
+	 * @param sequence number to send in ack
+	 * @param packet received
+	 */
+	private void sendACK(byte seqNo, DatagramPacket revived){ 
+		byte[] ACK; 
+		ACK = new byte[2]; 
+		DatagramPacket ACKpacket; 
+		try { 
+			ACK[0] =  (seqNo); 
+			ACKpacket = new DatagramPacket(ACK, ACK.length, address, port); 
+			socket.send(ACKpacket); 
+			terminal.println("ACK "+seqNo+" sent " +"port " + port); 
+		} catch (SocketException e) { 
+			e.printStackTrace(); 
+		} catch (IOException e) { 
+			e.printStackTrace(); 
+		} 
+
+	} 
+
 	public Runnable receiveMessage(){
 		byte[] buffer = new byte[MAX_BUFFER];
 		DatagramPacket packet = new DatagramPacket(buffer,	buffer.length, address, port);
@@ -239,9 +326,9 @@ public class MulticastClient extends Thread{
 			System.exit(-1);
 		}
 		return null;
-		
+
 	}
-	
+
 	/**
 	 * Main method
 	 * Start a client by creating an instance of the class MulticastClient.
@@ -254,19 +341,19 @@ public class MulticastClient extends Thread{
 		int port= 0;
 		String address=null;
 		MulticastClient client=null;
-		
+
 		System.out.println("Program start");
 		try {
 			if (args.length==2) {
 				address= args[0];
 				port= Integer.parseInt(args[1]);
-				
+
 				client= new MulticastClient(address, port);
 			}
-		else
-			client= new MulticastClient();
-		
-		client.run();
+			else
+				client= new MulticastClient();
+
+			client.run();
 		}	
 		catch(Exception e) {
 			e.printStackTrace();

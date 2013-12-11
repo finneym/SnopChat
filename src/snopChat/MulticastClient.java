@@ -58,6 +58,7 @@ public class MulticastClient extends Thread{
 			socket = new MulticastSocket(port);
 			socket.joinGroup(address);
 			terminal.setTitle("Client   Port - " + this.port + "  Address - " + address.toString());
+			//socket.setLoopbackMode(true);
 		}
 		catch(Exception e) {
 			e.printStackTrace();

@@ -62,7 +62,8 @@ public class MulticastServer extends Thread{
 			socket = new MulticastSocket(port);
 			socket.joinGroup(address);
 			terminal.setTitle("Server  Port - " + this.port + "  Address - " + address.toString());
-			socket.setLoopbackMode(true);
+			//socket.setLoopbackMode(true);
+			terminal.setLocation(400, 0);
 		}
 		catch(Exception e) {
 			e.printStackTrace();

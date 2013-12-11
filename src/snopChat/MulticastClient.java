@@ -26,7 +26,6 @@ public class MulticastClient extends Thread{
 
 	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet  
 
-	static final int MTU = 1500; // thea from other project
 
 	ArrayList<Node> nodeList;
 
@@ -107,109 +106,11 @@ public class MulticastClient extends Thread{
 		receiveThing();
 	}
 
+	/**
+	 * receives packet. Will not allow multiple copies of same packet to be taken in
+	 * 
+	 */
 	private void receiveThing(){
-		/*byte[] data;
-		DatagramPacket packet;
-		int size = 0;
-		byte seqNo;
-		Buffer[] buffers;
-		int portNum;
-		buffers = new Buffer[10];
-		boolean foundPortNum, allFin;
-		allFin=false;
-
-
-		terminal.println("Waiting for incoming packets");
-		while(!allFin){
-
-			try {
-				data= new byte[MTU+1];  // receive first packet with size of image as payload
-				packet= new DatagramPacket(data, data.length);
-
-				foundPortNum=false;
-				socket.receive(packet);
-				String msg= new String(data, 0, packet.getLength());
-				if(msg.substring(0,5).equalsIgnoreCase("hello")){
-					// send intro to everyone
-					//msg.substring(5, msg.length()) is the name...hopefully
-					boolean inList = false;
-					for(int i = 0; i<nodeList.size(); i++){
-						if(nodeList.get(i).getName().equals(msg.substring(5, msg.length()))){
-							inList = true;
-							break;
-						}
-					}
-					if(inList==false){
-						nodeList.add(new Node(msg.substring(5, msg.length()),packet.getAddress().toString(), packet.getPort()));		
-						//System.out.println(msg.substring(5, msg.length()) + " was added");		
-						terminal.println(msg.substring(5, msg.length()) + " was added");
-					}
-				}
-				else{
-					portNum = packet.getPort();
-					int bufferCount=0;
-					while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){
-						if(buffers[bufferCount]!=null){
-							if(buffers[bufferCount].getPortNum() == portNum){
-								foundPortNum=true;
-							}
-							else if(!foundPortNum){
-								bufferCount++;
-							}
-						}
-					}
-
-					if(!foundPortNum){
-
-						buffers[bufferCount]= new Buffer(packet.getPort());
-						seqNo = data[0];
-						data= packet.getData();// reserve buffer to receive image
-						terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum()+" "+ packet.getPort());
-						terminal.println("Received: " + new String(data, 0, packet.getLength()));
-						terminal.println("From: "+packet.getAddress()+":"+packet.getPort());
-						sendACK(seqNo, packet);
-
-						if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){
-							size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();
-							terminal.println("Filesize:" + size +" sequence number "+seqNo);
-							buffers[bufferCount].createBuffer(size);
-							buffers[bufferCount].moveOnSeqNum();
-						}
-					}
-
-
-					else{
-						seqNo = data[0];
-						sendACK(seqNo, packet);
-						terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum() +"  "+ packet.getPort());
-
-						if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){
-							terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + buffers[bufferCount].getCounter() + " - Payload: "+(packet.getLength()-1));
-							terminal.println("Received: " + new String(data, 0, packet.getLength()));
-							terminal.println("From: "+packet.getAddress()+":"+packet.getPort());	
-
-							buffers[bufferCount].copyIn(packet, data);
-							buffers[bufferCount].counterIncrease((packet.getLength()-1)) ;
-							buffers[bufferCount].moveOnSeqNum();
-						}
-
-						buffers[bufferCount].checkFin();
-
-					}
-				}
-			}
-
-			catch(java.lang.Exception e) {
-				e.printStackTrace();
-			}	
-			allFin=true;
-			for(int i=0; i<buffers.length && buffers[i]!=null; i++){
-				if(!buffers[i].getFin()){
-					allFin=false;
-				}
-			}
-		}
-		terminal.println("receive completed");	*/
 		byte[] data; 
 		DatagramPacket packet; 
 		int size = 0; 
@@ -225,11 +126,12 @@ public class MulticastClient extends Thread{
 		while(!allFin){  
 
 			try { 
-				data= new byte[MTU+1];  // receive first packet with size of image as payload 
+				data= new byte[MAX_BUFFER+1];  // receive first packet with size of image as payload 
 				packet= new DatagramPacket(data, data.length); 
 
+				//will need to change all this if port is not individual to sender
 				foundPortNum=false; 
-				socket.receive(packet); 
+				socket.receive(packet);//receive packet 
 				portNum = packet.getPort(); 
 				int bufferCount=0; 
 				//check if one or more packets have being received from this port before
@@ -247,10 +149,10 @@ public class MulticastClient extends Thread{
 				if(!foundPortNum){ 
 					//create new instance of buffer
 					buffers[bufferCount]= new Buffer(packet.getPort()); 
-					seqNo = data[0]; 
+					seqNo = data[0]; //get seq num
 					data= packet.getData();// reserve buffer to receive image 
 					terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum()+" "+ packet.getPort());  
-					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ 
+					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ //check if it really is the first packet
 						size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();  //add size
 						terminal.println("Filesize:" + size +" sequence number "+seqNo); 
 						buffers[bufferCount].createBuffer(size); 
@@ -264,7 +166,7 @@ public class MulticastClient extends Thread{
 					seqNo = data[0];  
 					terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum() +"  "+ packet.getPort()); 
 					//if this packet is the next packet expected for this port add it to the array
-					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ 
+					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ //check it is the right packet
 						terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + buffers[bufferCount].getCounter() + " - Payload: "+(packet.getLength()-1));    
 
 						buffers[bufferCount].copyIn(packet, data); 
@@ -292,7 +194,8 @@ public class MulticastClient extends Thread{
 	}
 
 	/**
-	 * sends an ack to the port that it got the packet from
+	 * sends an ack to the port that it got the packet from 
+	 * will send the number of the next packet it expects to get
 	 * @param sequence number to send in ack
 	 * @param packet received
 	 */

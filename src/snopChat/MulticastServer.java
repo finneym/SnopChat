@@ -35,7 +35,6 @@ public class MulticastServer extends Thread{
 	int port;
 
 
-	static final int MTU = 1500; // thea from other project
 	static final String FILENAME = "input.jpg";
 
 	/**
@@ -63,6 +62,7 @@ public class MulticastServer extends Thread{
 			socket = new MulticastSocket(port);
 			socket.joinGroup(address);
 			terminal.setTitle("Server  Port - " + this.port + "  Address - " + address.toString());
+			socket.setLoopbackMode(true);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -121,6 +121,7 @@ public class MulticastServer extends Thread{
 					terminal.println("Sending: " + new String(buffer));
 					socket.send(packet);
 				}
+				//check if the message being received is a hello message
 				else if(msg.substring(0,5).equalsIgnoreCase("hello")) {
 					// send intro to everyone
 					//msg.substring(5, msg.length()) is the name of the Node...hopefully
@@ -151,92 +152,43 @@ public class MulticastServer extends Thread{
 		sendThings(FILENAME);
 	}
 
+	/**
+	 * from working version of stop and wait
+	 * will send a file in packets and wait for the correct ACK before sending the next packet
+	 * @param name of file to send
+	 */
 	private void sendThings(String filename){
-		/*byte[] data= null;
-		byte[] data2= null;
-		DatagramPacket packet= null;
-
-		File file= null;
-		FileInputStream fin= null;
-		byte[] buffer= null;
-		int size;
-		int counter;
-		byte seqNo;
-		byte maxSeqNo = 15;
-
-		try {	
-			file= new File(filename);				// Reserve buffer for length of file and read file
-			buffer= new byte[(int) file.length()];
-			fin= new FileInputStream(file);
-			size= fin.read(buffer);
-			if (size==-1) throw new Exception("Problem with File Access");
-			terminal.println("File size: " + buffer.length + ", read: " + size);
-
-			seqNo =0;
-			data= (Integer.toString(size)).getBytes();  // 1st packet contains the length only
-			data2 = new byte[data.length +1]; //create a new data array
-			data2[0] = seqNo; // add a sequence number to it
-			for(int i=1; i<data2.length; i++){ //copy old array into rest of new array
-				data2[i]=data[i-1];
-			}
-			packet= new DatagramPacket(data2, data2.length, address, port);
-			socket.send(packet);
-			recieveACK(seqNo, packet);
-
-			counter= 0;
-			do {
-				if(seqNo == maxSeqNo){
-					seqNo = 0;
-				}
-				else{
-					seqNo++;
-				}
-				data= new byte[(counter+MTU<size) ? MTU+1 : size-counter+1];  // The length of the packet is either MTU or a remainder
-				data[0]=seqNo;
-				java.lang.System.arraycopy(buffer, counter, data, 1, (data.length-1));
-				terminal.println("Counter: " + counter + " - Payload size: " + (data.length-1) +" sequence number: "+seqNo+" port " +socket.getLocalPort());
-
-				packet= new DatagramPacket(data, data.length, address, port);
-				socket.send(packet);
-				recieveACK(seqNo, packet);
-				counter+= (data.length-1);
-			} while (counter<size);
-
-			terminal.println("\nSend complete"+" port " +socket.getLocalPort());
-		}
-		catch(java.lang.Exception e) {
-			e.printStackTrace();
-		}	*/
-		byte[] data= null; 
-		byte[] data2= null; 
+		byte[] data= null; //origional array to read image into
+		byte[] data2= null; //array to copy origional array into to add sequence number to the begining
 		DatagramPacket packet= null; 
  
 		File file= null; 
 		FileInputStream fin= null; 
 		byte[] buffer= null; 
-		int size; 
-		int counter; 
-		byte seqNo; 
+		int size; //size of the image
+		int counter; //to check when all of image is sent
+		byte seqNo; //number to send with packet in first byte of data2
 		byte maxSeqNo = 15; 
 
 		try {    
+			//reading in the file
 			file= new File(FILENAME);               // Reserve buffer for length of file and read file 
-			buffer= new byte[(int) file.length()];
+			buffer= new byte[(int) file.length()]; 
 			fin= new FileInputStream(file); 
 			size= fin.read(buffer); 
 			if (size==-1) throw new Exception("Problem with File Access"); 
 			terminal.println("File size: " + buffer.length + ", read: " + size); 
 
-			seqNo =0; 
+			seqNo =0; //set sequence number to equal 0 to begin (if changeing remember to change expected seq number in the buffer class
 			data= (Integer.toString(size)).getBytes();  // 1st packet contains the length only 
-			data2 = new byte[data.length +1]; //create a new data array 
-			data2[0] = seqNo; // add a sequence number to it 
+			data2 = new byte[data.length +1]; //create a new data array of length one greater than the origional
+			data2[0] = seqNo; // add a sequence number to the first byte of this new array
 			for(int i=1; i<data2.length; i++){ //copy old array into rest of new array 
 				data2[i]=data[i-1]; 
 			} 
-			packet= new DatagramPacket(data2, data2.length, address, port); 
+			packet= new DatagramPacket(data2, data2.length, address, port); //create a new packet from the data2 array
 			socket.send(packet); 
-			recieveACK(seqNo, packet,maxSeqNo); 
+			recieveACK(seqNo, packet,maxSeqNo);//will not proceed unless correct ACK is received 
 
 			counter= 0; 
 			do { 
@@ -247,17 +199,18 @@ public class MulticastServer extends Thread{
 				else{ 
 					seqNo++; 
 				} 
-				data= new byte[(counter+MTU<size) ? MTU+1 : size-counter+1];  // The length of the packet is either MTU or a remainder 
-				data[0]=seqNo; 
-				java.lang.System.arraycopy(buffer, counter, data, 1, (data.length-1)); 
+				
+				data= new byte[(counter+MAX_BUFFER<size) ? MAX_BUFFER+1 : size-counter+1];  // The length of the packet is either MTU or a remainder 
+				data[0]=seqNo; //data 0 is the sequence number
+				java.lang.System.arraycopy(buffer, counter, data, 1, (data.length-1)); //copy data into buffer leaving out the sequence number
 				terminal.println("Counter: " + counter + " - Payload size: " + (data.length-1) +" sequence number: "+seqNo+" port " +socket.getLocalPort()); 
 
-				packet= new DatagramPacket(data, data.length, address, port); 
-				socket.send(packet); 
-				recieveACK(seqNo, packet, maxSeqNo); 
-				counter+= (data.length-1); 
+				packet= new DatagramPacket(data, data.length, address, port); //creat new packet
+				socket.send(packet); //send it
+				recieveACK(seqNo, packet, maxSeqNo);//will not proceed unless correct ACK is received 
+				counter+= (data.length-1); //add the length of the packet sent (not counting the sequence number) to the counter
 						
-			} while (counter<size); 
+			} while (counter<size); // while not all image sent
 			
 
 			terminal.println("\nSend complete"+" port " +socket.getLocalPort()); 
@@ -267,35 +220,6 @@ public class MulticastServer extends Thread{
 		}        
 	}
 
-/*
-	private boolean recieveACK(int ACKNum, DatagramPacket toSend){
-		boolean positiveACKRecieved = false;
-		byte[] ACK;
-		ACK = new byte[2];
-		DatagramPacket ACKpacket;
-		ACKpacket = new DatagramPacket(ACK, ACK.length);
-		try {
-			while(!positiveACKRecieved) {
-				try {
-					socket.setSoTimeout(100);
-					socket.receive(ACKpacket);
-					positiveACKRecieved = (ACK[0]== ACKNum);
-					if(positiveACKRecieved){
-						terminal.println("ACK: " + ACK[0] +" recieved"+" port " +socket.getLocalPort());
-					}
-				} catch (SocketTimeoutException e) {
-					terminal.println("Timed out: Still waiting for ACK: " + ACKNum+" port " +socket.getLocalPort());
-					socket.send(toSend);
-					terminal.println("packet " + ACKNum +" resent"+" port " +socket.getLocalPort());
-				}
-			}
-
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		return positiveACKRecieved;
-	}*/
 	/**
 	 * @param sequence number of packet just sent
 	 * @param packet just sent
@@ -303,21 +227,21 @@ public class MulticastServer extends Thread{
 	 * @return true if correct ack received, false otherwise
 	 */
 	private boolean recieveACK(int ACKNum, DatagramPacket toSend, int maxSeqNum){ 
-		boolean positiveACKRecieved = false; 
-		byte[] ACK; 
-		ACK = new byte[2]; 
-		DatagramPacket ACKpacket; 
+		boolean positiveACKRecieved = false; //changes when correct ACK is received
+		byte[] ACK= new byte[2]; 
+		DatagramPacket ACKpacket; //new packet to receive ack
 		ACKpacket = new DatagramPacket(ACK, ACK.length); 
 		try { 
-			while(!positiveACKRecieved) { 
+			while(!positiveACKRecieved) { //while a positive ack is not received
 				try { 
-					socket.setSoTimeout(100); 
-					socket.receive(ACKpacket); 
-					positiveACKRecieved = (ACK[0]== (ACKNum==maxSeqNum? 0:ACKNum+1)); 
-					if(positiveACKRecieved){ 
+					socket.setSoTimeout(100); //set time out time
+					socket.receive(ACKpacket); //receive packer
+					positiveACKRecieved = (ACK[0]== (ACKNum==maxSeqNum? 0:ACKNum+1));// if ack number received is equal to the number sent +1 (0 if number sent was max number) 
+					if(positiveACKRecieved){ //if it was the right ack 
 						terminal.println("ACK: " + ACK[0] +" recieved"+" port " +socket.getLocalPort()); 
 					} 
 				} catch (SocketTimeoutException e) { 
+					//if timeout resent packet and print details
 					terminal.println("Timed out: Still waiting for ACK: " + ACKNum+" port " +socket.getLocalPort()); 
 					socket.send(toSend); 
 					terminal.println("packet " + ACKNum +" resent"+" port " +socket.getLocalPort()); 

@@ -20,9 +20,11 @@ public class Node {
 	MulticastServer mServer;
 	int mPort;
 	String mName;
+	boolean fileToSend;
 	
-	public Node(){
+	public Node(boolean toSend){
 		this(MCAST_NAME, MCAST_ADDR, MCAST_PORT);
+		this.fileToSend =toSend;
 	}
 	
 	public Node(String name, String address, int port){
@@ -39,19 +41,26 @@ public class Node {
 	}
 	
 	public void introduce(){
-		Thread server = new Thread(mServer.sendMessage("Test Message"));
+		if(this.fileToSend){
+			Thread server = new Thread(mServer.sendMessage("Test Message"));
+			server.start();
+		}
 		Thread client = new Thread(mClient.receiveMessage());
-		server.start();
 		client.start();
 	}
 	
 	public void send(File file){
-		Thread[] thread = new Thread[2];
-		thread[0] = new Thread(mServer);
-		thread[1] = new Thread(mClient);
-		for(int i = 0; i<thread.length;i++){
-			thread[i].start();
+//		Thread[] thread = new Thread[2];
+//		
+//		thread[0] = new Thread(mServer);
+//		thread[1] = new Thread(mClient);
+//		for(int i = 0; i<thread.length;i++){
+//			thread[i].start();
+//		}
+		if(this.fileToSend){
+			mServer.start();
 		}
+		mClient.start();
 	}
 	public void send(){
 		Thread[] thread = new Thread[2];
@@ -65,10 +74,13 @@ public class Node {
 		return this.mName;
 	}
 	public static void main(String[] args) {
-			Node test = new Node();
+			Node test = new Node(true);
+			Node test2 = new Node(true);
 			File file = null;
-			//test.introduce();
-			test.send();
+			test.introduce();
+			//test.send();
+			test2.introduce();
+			//test2.send();
 	}
 }
 

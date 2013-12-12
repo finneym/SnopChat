@@ -75,7 +75,7 @@ public class MulticastClient extends Thread{
 	 * and prints the content of received datagrams.
 	 */
 	public void run(){
-		/*String msg = "Date?";
+		/*		String msg = "Date?";
 		byte[] buffer;
 		DatagramPacket packet = null;
 
@@ -133,51 +133,54 @@ public class MulticastClient extends Thread{
 				//will need to change all this if port is not individual to sender
 				foundPortNum=false; 
 				socket.receive(packet);//receive packet 
-				portNum = packet.getPort(); 
-				int bufferCount=0; 
-				//check if one or more packets have being received from this port before
-				while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){ 
-					if(buffers[bufferCount]!=null){ 
-						if(buffers[bufferCount].getPortNum() == portNum){ 
-							foundPortNum=true; 
-						} 
-						else if(!foundPortNum){ 
-							bufferCount++; 
+				terminal.println("Received: " + new String(data, 0, packet.getLength()));
+				//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
+				if(packet.getLength()>1){
+					portNum = packet.getPort(); 
+					int bufferCount=0; 
+					//check if one or more packets have being received from this port before
+					while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){ 
+						if(buffers[bufferCount]!=null){ 
+							if(buffers[bufferCount].getPortNum() == portNum){ 
+								foundPortNum=true; 
+							} 
+							else if(!foundPortNum){ 
+								bufferCount++; 
+							} 
 						} 
 					} 
-				} 
-				//if no packet has being received before
-				if(!foundPortNum){ 
-					//create new instance of buffer
-					buffers[bufferCount]= new Buffer(packet.getPort()); 
-					seqNo = data[0]; //get seq num
-					data= packet.getData();// reserve buffer to receive image 
-					terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum()+" "+ packet.getPort());  
-					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ //check if it really is the first packet
-						size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();  //add size
-						terminal.println("Filesize:" + size +" sequence number "+seqNo); 
-						buffers[bufferCount].createBuffer(size); 
-						buffers[bufferCount].moveOnSeqNum(); // move on the expected seq num
+					//if no packet has being received before
+					if(!foundPortNum){ 
+						//create new instance of buffer
+						buffers[bufferCount]= new Buffer(packet.getPort()); 
+						seqNo = data[0]; //get seq num
+						data= packet.getData();// reserve buffer to receive image 
+						terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum()+" "+ packet.getPort());  
+						if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ //check if it really is the first packet
+							size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();  //add size
+							terminal.println("Filesize:" + size +" sequence number "+seqNo); 
+							buffers[bufferCount].createBuffer(size); 
+							buffers[bufferCount].moveOnSeqNum(); // move on the expected seq num
+						}
+						sendACK((byte)(buffers[bufferCount].getExpSeqNum()), packet); // send an ack for the next packet expected from this port
+					} 
+
+					//otherwise if a packet has being received
+					else{ 
+						seqNo = data[0];  
+						terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum() +"  "+ packet.getPort()); 
+						//if this packet is the next packet expected for this port add it to the array
+						if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ //check it is the right packet
+							terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + buffers[bufferCount].getCounter() + " - Payload: "+(packet.getLength()-1));    
+
+							buffers[bufferCount].copyIn(packet, data); 
+							buffers[bufferCount].counterIncrease((packet.getLength()-1)) ; 
+							buffers[bufferCount].moveOnSeqNum(); 
+							buffers[bufferCount].checkFin(); 
+						} 
+						sendACK((byte)(buffers[bufferCount].getExpSeqNum()), packet); //send an ack for the next packet expected
+
 					}
-					sendACK((byte)(buffers[bufferCount].getExpSeqNum()), packet); // send an ack for the next packet expected from this port
-				} 
-
-				//otherwise if a packet has being received
-				else{ 
-					seqNo = data[0];  
-					terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum() +"  "+ packet.getPort()); 
-					//if this packet is the next packet expected for this port add it to the array
-					if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkPort(packet.getPort())){ //check it is the right packet
-						terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + buffers[bufferCount].getCounter() + " - Payload: "+(packet.getLength()-1));    
-
-						buffers[bufferCount].copyIn(packet, data); 
-						buffers[bufferCount].counterIncrease((packet.getLength()-1)) ; 
-						buffers[bufferCount].moveOnSeqNum(); 
-						buffers[bufferCount].checkFin(); 
-					} 
-					sendACK((byte)(buffers[bufferCount].getExpSeqNum()), packet); //send an ack for the next packet expected
-
-
 				} 
 			} 
 
@@ -202,13 +205,13 @@ public class MulticastClient extends Thread{
 	 */
 	private void sendACK(byte seqNo, DatagramPacket revived){ 
 		byte[] ACK; 
-		ACK = new byte[2]; 
+		ACK = new byte[1]; 
 		DatagramPacket ACKpacket; 
 		try { 
 			ACK[0] =  (seqNo); 
 			ACKpacket = new DatagramPacket(ACK, ACK.length, address, port); 
 			socket.send(ACKpacket); 
-			terminal.println("ACK "+seqNo+" sent " +"port " + port); 
+			terminal.println("ACK "+seqNo+" sent " +ACK); 
 		} catch (SocketException e) { 
 			e.printStackTrace(); 
 		} catch (IOException e) { 

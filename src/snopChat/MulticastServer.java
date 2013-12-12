@@ -229,7 +229,7 @@ public class MulticastServer extends Thread{
 	 */
 	private boolean recieveACK(int ACKNum, DatagramPacket toSend, int maxSeqNum){ 
 		boolean positiveACKRecieved = false; //changes when correct ACK is received
-		byte[] ACK= new byte[2]; 
+		byte[] ACK= new byte[1]; 
 		DatagramPacket ACKpacket; //new packet to receive ack
 		ACKpacket = new DatagramPacket(ACK, ACK.length); 
 		try { 
@@ -239,7 +239,7 @@ public class MulticastServer extends Thread{
 					socket.receive(ACKpacket); //receive packer
 					positiveACKRecieved = (ACK[0]== (ACKNum==maxSeqNum? 0:ACKNum+1));// if ack number received is equal to the number sent +1 (0 if number sent was max number) 
 					if(positiveACKRecieved){ //if it was the right ack 
-						terminal.println("ACK: " + ACK[0] +" recieved"+" port " +socket.getLocalPort()); 
+						terminal.println("ACK: " + ACK[0] +" recieved"+ACK); 
 					} 
 				} catch (SocketTimeoutException e) { 
 					//if timeout resent packet and print details

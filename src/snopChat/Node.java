@@ -20,11 +20,13 @@ public class Node {
 	MulticastServer mServer;
 	int mPort;
 	String mName;
+	String mId;
 	boolean fileToSend;
 	
-	public Node(boolean toSend){
+	public Node(boolean toSend, String message){
 		this(MCAST_NAME, MCAST_ADDR, MCAST_PORT);
 		this.fileToSend =toSend;
+		mId=message;
 	}
 	
 	public Node(String name, String address, int port){
@@ -42,7 +44,7 @@ public class Node {
 	
 	public void introduce(){
 		if(this.fileToSend){
-			Thread server = new Thread(mServer.sendMessage("Test Message"));
+			Thread server = new Thread(mServer.sendMessage(mId));
 			server.start();
 		}
 		Thread client = new Thread(mClient.receiveMessage());
@@ -74,12 +76,12 @@ public class Node {
 		return this.mName;
 	}
 	public static void main(String[] args) {
-			Node test = new Node(true);
-			Node test2 = new Node(true);
+			Node test = new Node(true ,"1");
+			//Node test2 = new Node(false, "2");
 			File file = null;
 			test.introduce();
-			//test.send();
-			test2.introduce();
+			test.send();
+			//test2.introduce();
 			//test2.send();
 	}
 }

@@ -60,6 +60,20 @@ Jobs
 		-updating arrayList()
 
 	deletion stuff
+	
+	
+	
+	
+	
+we just discovered that we're able to use DatagramSockets for ACKs
+Hellos can be formatted to be either
+
+hello x.x.x.x port
+frst 5 are hello
+last (we need to dedicate a length of bytes to give to the port)
+then turn the remainder of the byte to a String
+
+
 
 	
 

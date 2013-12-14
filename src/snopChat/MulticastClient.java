@@ -29,7 +29,7 @@ public class MulticastClient extends Thread{
 	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet  
 
 
-	ArrayList<Node> nodeList;
+	ArrayList<Details> receivingFrom;
 
 	MulticastSocket multiSocket;
 	DatagramSocket dataSocket;
@@ -139,7 +139,7 @@ public class MulticastClient extends Thread{
 				multiSocket.receive(packet);//receive packet 
 				terminal.println("Received: " + new String(data, 0, packet.getLength()));
 				//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
-				if(packet.getLength()>1){
+				//if(packet.getLength()>1){
 					portNum = packet.getPort(); 
 					int bufferCount=0; 
 					//check if one or more packets have being received from this port before
@@ -185,7 +185,7 @@ public class MulticastClient extends Thread{
 						sendACK((byte)(buffers[bufferCount].getExpSeqNum()), packet); //send an ack for the next packet expected
 
 					}
-				} 
+				//} 
 			} 
 
 			catch(java.lang.Exception e) { 

@@ -20,20 +20,20 @@ public class Node {
 	MulticastServer mServer;
 	int mPort;
 	String mName;
-	String mId;
+	int mId;
 	boolean fileToSend;
 	//port num for datagram socket
-	public Node(boolean toSend, String message, int portNum, int portNum2){
-		this(MCAST_NAME, MCAST_ADDR, MCAST_PORT, portNum, portNum2);
+	public Node(boolean toSend, int nodeId, int portNum, int portNum2){
+		this(MCAST_NAME, MCAST_ADDR, MCAST_PORT, portNum, portNum2, nodeId);
 		this.fileToSend =toSend;
-		mId=message;
 	}
 	
-	public Node(String name, String address, int port, int dataPort, int dataPort2){
+	public Node(String name, String address, int port, int dataPort, int dataPort2, int nodeId){
 		try{
 		this.mName = name;
 		this.mAddress = InetAddress.getByName(address);
 		this.mPort = port;
+		this.mId=nodeId;
 		mClient = new MulticastClient(address.toString(), port, dataPort);
 		mServer = new MulticastServer(address.toString(), port, dataPort2);
 		}catch(Exception e) {
@@ -44,7 +44,7 @@ public class Node {
 	
 	public void introduce(){
 		if(this.fileToSend){
-			Thread server = new Thread(mServer.sendMessage(mId));
+			Thread server = new Thread(mServer.sendMessage("hi"));
 			server.start();
 		}
 		Thread client = new Thread(mClient.receiveMessage());
@@ -76,7 +76,7 @@ public class Node {
 		return this.mName;
 	}
 	public static void main(String[] args) {
-			Node test = new Node(true ,"1", 50002, 50003);
+			Node test = new Node(true ,1, 50002, 50003);
 			//Node test2 = new Node(false, "2");
 			File file = null;
 			test.introduce();

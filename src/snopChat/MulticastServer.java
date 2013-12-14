@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
@@ -26,10 +27,12 @@ public class MulticastServer extends Thread{
 
 	public static final String MCAST_ADDR = "230.0.0.1";	// Hardcoded address for the multicast group
 	public static final int MCAST_PORT = 9013; 				// Hardcoded port number for the multicast group
+	public static final int DATA_PORT = 50002; 
 
 	public static final int MAX_BUFFER = 1024; 				// Maximum size for data in a packet
 	ArrayList<Node> nodeList;
-	MulticastSocket socket;
+	MulticastSocket multiSocket;
+	DatagramSocket dataSocket;
 	InetAddress address;
 	Terminal terminal = new Terminal();
 	int port;
@@ -43,7 +46,7 @@ public class MulticastServer extends Thread{
 	 * Fills an instance with the hardcoded values
 	 */
 	public MulticastServer() {
-		this(MCAST_ADDR, MCAST_PORT);
+		this(MCAST_ADDR, MCAST_PORT, DATA_PORT);
 	}
 
 	/**
@@ -55,12 +58,13 @@ public class MulticastServer extends Thread{
 	 * @param addr Address of the multicast group as string
 	 * @param port Port number of the server 
 	 */
-	public MulticastServer(String addr, int port) {
+	public MulticastServer(String addr, int port, int dataPort) {
 		try {
 			this.port= port;
 			address = InetAddress.getByName(addr);
-			socket = new MulticastSocket(port);
-			socket.joinGroup(address);
+			multiSocket = new MulticastSocket(port);
+			dataSocket =new DatagramSocket(dataPort);
+			multiSocket.joinGroup(address);
 			terminal.setTitle("Server  Port - " + this.port + "  Address - " + address.toString());
 			//socket.setLoopbackMode(true);
 			terminal.setLocation(400, 0);
@@ -74,7 +78,7 @@ public class MulticastServer extends Thread{
 	public Runnable sendMessage(String msg){
 		DatagramPacket packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
 		try {
-			socket.send(packet);
+			multiSocket.send(packet);
 			//System.out.println("Sent - "+msg);
 			terminal.println("Sent - "+msg);
 		} catch (IOException e) {
@@ -188,7 +192,7 @@ public class MulticastServer extends Thread{
 				data2[i]=data[i-1]; 
 			} 
 			packet= new DatagramPacket(data2, data2.length, address, port); //create a new packet from the data2 array
-			socket.send(packet); 
+			multiSocket.send(packet); 
 			recieveACK(seqNo, packet,maxSeqNo);//will not proceed unless correct ACK is received 
 
 			counter= 0; 
@@ -204,17 +208,17 @@ public class MulticastServer extends Thread{
 				data= new byte[(counter+MAX_BUFFER<size) ? MAX_BUFFER+1 : size-counter+1];  // The length of the packet is either MTU or a remainder 
 				data[0]=seqNo; //data 0 is the sequence number
 				java.lang.System.arraycopy(buffer, counter, data, 1, (data.length-1)); //copy data into buffer leaving out the sequence number
-				terminal.println("Counter: " + counter + " - Payload size: " + (data.length-1) +" sequence number: "+seqNo+" port " +socket.getLocalPort()); 
+				terminal.println("Counter: " + counter + " - Payload size: " + (data.length-1) +" sequence number: "+seqNo+" port " +multiSocket.getLocalPort()); 
 
 				packet= new DatagramPacket(data, data.length, address, port); //creat new packet
-				socket.send(packet); //send it
+				multiSocket.send(packet); //send it
 				recieveACK(seqNo, packet, maxSeqNo);//will not proceed unless correct ACK is received 
 				counter+= (data.length-1); //add the length of the packet sent (not counting the sequence number) to the counter
 						
 			} while (counter<size); // while not all image sent
 			
 
-			terminal.println("\nSend complete"+" port " +socket.getLocalPort()); 
+			terminal.println("\nSend complete"+" port " +multiSocket.getLocalPort()); 
 		} 
 		catch(java.lang.Exception e) { 
 			e.printStackTrace(); 
@@ -235,17 +239,17 @@ public class MulticastServer extends Thread{
 		try { 
 			while(!positiveACKRecieved) { //while a positive ack is not received
 				try { 
-					socket.setSoTimeout(100); //set time out time
-					socket.receive(ACKpacket); //receive packer
+					dataSocket.setSoTimeout(100); //set time out time
+					dataSocket.receive(ACKpacket); //receive packer
 					positiveACKRecieved = (ACK[0]== (ACKNum==maxSeqNum? 0:ACKNum+1));// if ack number received is equal to the number sent +1 (0 if number sent was max number) 
 					if(positiveACKRecieved){ //if it was the right ack 
 						terminal.println("ACK: " + ACK[0] +" recieved"+ACK); 
 					} 
 				} catch (SocketTimeoutException e) { 
 					//if timeout resent packet and print details
-					terminal.println("Timed out: Still waiting for ACK: " + ACKNum+" port " +socket.getLocalPort()); 
-					socket.send(toSend); 
-					terminal.println("packet " + ACKNum +" resent"+" port " +socket.getLocalPort()); 
+					terminal.println("Timed out: Still waiting for ACK: " + ACKNum+" port " +multiSocket.getLocalPort()); 
+					multiSocket.send(toSend); 
+					terminal.println("packet " + ACKNum +" resent"+" port " +multiSocket.getLocalPort()); 
 				} 
 			} 
 
@@ -264,32 +268,32 @@ public class MulticastServer extends Thread{
 	 * @param args  [0] IP address the server should bind to 
 	 * 				[1] Port number the server should bind to
 	 */
-	public static void main(String[] args) {
-		int port= 0;
-		String address=null;
-		MulticastServer server=null;
-
-		System.out.println("Program start");
-		//		Terminal terminal =new Terminal();
-		//		terminal.println("Program start");
-		try {
-			if (args.length==2) {
-				address= args[0];
-				port= Integer.parseInt(args[1]);
-
-				server= new MulticastServer(address, port);
-			}
-			else
-				server= new MulticastServer();
-
-			server.run();
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		System.out.println("Program end");
-		//		terminal.println("program end");
-	}
+//	public static void main(String[] args) {
+//		int port= 0;
+//		String address=null;
+//		MulticastServer server=null;
+//
+//		System.out.println("Program start");
+//		//		Terminal terminal =new Terminal();
+//		//		terminal.println("Program start");
+//		try {
+//			if (args.length==2) {
+//				address= args[0];
+//				port= Integer.parseInt(args[1]);
+//
+//				server= new MulticastServer(address, port);
+//			}
+//			else
+//				server= new MulticastServer();
+//
+//			server.run();
+//		}
+//		catch(Exception e) {
+//			e.printStackTrace();
+//			System.exit(-1);
+//		}
+//		System.out.println("Program end");
+//		//		terminal.println("program end");
+//	}
 
 }

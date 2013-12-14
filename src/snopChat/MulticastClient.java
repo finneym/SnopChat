@@ -8,6 +8,7 @@ package snopChat;
  */
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
@@ -23,13 +24,15 @@ public class MulticastClient extends Thread{
 
 	public static final String MCAST_ADDR = "230.0.0.1"; // hardcoded address for the multicast group
 	public static final int MCAST_PORT = 9013; // hardcoded port number for the multicast group
+	public static final int DATA_PORT = 50001;  
 
 	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet  
 
 
 	ArrayList<Node> nodeList;
 
-	MulticastSocket socket;
+	MulticastSocket multiSocket;
+	DatagramSocket dataSocket;
 	InetAddress address;
 	int port;
 	Terminal terminal = new Terminal();
@@ -39,7 +42,7 @@ public class MulticastClient extends Thread{
 	 * Fills an instance with the hardcoded values
 	 */
 	public MulticastClient() {
-		this(MCAST_ADDR, MCAST_PORT);
+		this(MCAST_ADDR, MCAST_PORT, DATA_PORT);
 	}
 
 	/**
@@ -51,12 +54,13 @@ public class MulticastClient extends Thread{
 	 * @param addr Address of the multicast group as string
 	 * @param port Port number of the server 
 	 */
-	public MulticastClient(String addr, int port) {
+	public MulticastClient(String addr, int port, int dataPort) {
 		try {
 			this.port= port;
 			address = InetAddress.getByName(addr);
-			socket = new MulticastSocket(port);
-			socket.joinGroup(address);
+			multiSocket = new MulticastSocket(port);
+			dataSocket =new DatagramSocket(dataPort);
+			multiSocket.joinGroup(address);
 			terminal.setTitle("Client   Port - " + this.port + "  Address - " + address.toString());
 			//socket.setLoopbackMode(true);
 		}
@@ -132,7 +136,7 @@ public class MulticastClient extends Thread{
 
 				//will need to change all this if port is not individual to sender
 				foundPortNum=false; 
-				socket.receive(packet);//receive packet 
+				multiSocket.receive(packet);//receive packet 
 				terminal.println("Received: " + new String(data, 0, packet.getLength()));
 				//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
 				if(packet.getLength()>1){
@@ -210,7 +214,7 @@ public class MulticastClient extends Thread{
 		try { 
 			ACK[0] =  (seqNo); 
 			ACKpacket = new DatagramPacket(ACK, ACK.length, address, port); 
-			socket.send(ACKpacket); 
+			dataSocket.send(ACKpacket); 
 			terminal.println("ACK "+seqNo+" sent " +ACK); 
 		} catch (SocketException e) { 
 			e.printStackTrace(); 
@@ -224,7 +228,7 @@ public class MulticastClient extends Thread{
 		byte[] buffer = new byte[MAX_BUFFER];
 		DatagramPacket packet = new DatagramPacket(buffer,	buffer.length, address, port);
 		try {
-			socket.receive(packet);
+			multiSocket.receive(packet);
 			String msg = new String(buffer, 0, packet.getLength());
 			//System.out.println("Sent - "+msg);
 			terminal.println("Received - "+msg);
@@ -235,37 +239,38 @@ public class MulticastClient extends Thread{
 		return null;
 
 	}
-
-	/**
-	 * Main method
-	 * Start a client by creating an instance of the class MulticastClient.
-	 * 
-	 * @param args 	[0] IP address the client should send to 
-	 * 				[1] Port number the client should send to
-	 */
-	public static void main(String[] args) {
-
-		int port= 0;
-		String address=null;
-		MulticastClient client=null;
-
-		System.out.println("Program start");
-		try {
-			if (args.length==2) {
-				address= args[0];
-				port= Integer.parseInt(args[1]);
-
-				client= new MulticastClient(address, port);
-			}
-			else
-				client= new MulticastClient();
-
-			client.run();
-		}	
-		catch(Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		System.out.println("Program end");
-	}
 }
+
+/**
+ * Main method
+ * Start a client by creating an instance of the class MulticastClient.
+ * 
+ * @param args 	[0] IP address the client should send to 
+ * 				[1] Port number the client should send to
+ */
+//	public static void main(String[] args) {
+//
+//		int port= 0;
+//		String address=null;
+//		MulticastClient client=null;
+//
+//		System.out.println("Program start");
+//		try {
+//			if (args.length==2) {
+//				address= args[0];
+//				port= Integer.parseInt(args[1]);
+//
+//				client= new MulticastClient(address, port);
+//			}
+//			else
+//				client= new MulticastClient();
+//
+//			client.run();
+//		}	
+//		catch(Exception e) {
+//			e.printStackTrace();
+//			System.exit(-1);
+//		}
+//		System.out.println("Program end");
+//	}
+//}

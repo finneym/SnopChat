@@ -22,20 +22,20 @@ public class Node {
 	String mName;
 	String mId;
 	boolean fileToSend;
-	
-	public Node(boolean toSend, String message){
-		this(MCAST_NAME, MCAST_ADDR, MCAST_PORT);
+	//port num for datagram socket
+	public Node(boolean toSend, String message, int portNum, int portNum2){
+		this(MCAST_NAME, MCAST_ADDR, MCAST_PORT, portNum, portNum2);
 		this.fileToSend =toSend;
 		mId=message;
 	}
 	
-	public Node(String name, String address, int port){
+	public Node(String name, String address, int port, int dataPort, int dataPort2){
 		try{
 		this.mName = name;
 		this.mAddress = InetAddress.getByName(address);
 		this.mPort = port;
-		mClient = new MulticastClient(address.toString(), port);
-		mServer = new MulticastServer(address.toString(), port);
+		mClient = new MulticastClient(address.toString(), port, dataPort);
+		mServer = new MulticastServer(address.toString(), port, dataPort2);
 		}catch(Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -76,7 +76,7 @@ public class Node {
 		return this.mName;
 	}
 	public static void main(String[] args) {
-			Node test = new Node(true ,"1");
+			Node test = new Node(true ,"1", 50002, 50003);
 			//Node test2 = new Node(false, "2");
 			File file = null;
 			test.introduce();

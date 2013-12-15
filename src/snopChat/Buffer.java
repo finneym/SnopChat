@@ -10,7 +10,7 @@ public class Buffer {
 	private final int MAX_SEQ_NUM =15;
 	private String fileName;
 	private byte[] mBuffer;
-	private int mPortNum;
+	private int mID;
 	File file;
 	FileOutputStream fout;
 	private int mExpSeqNo;
@@ -18,25 +18,25 @@ public class Buffer {
 	private boolean mFin;
 	private int mSize;
 
-	Buffer( int portNum){
-		mPortNum =portNum;
-		mExpSeqNo=0;
+	Buffer( int id){
+		mID =id;
+		mExpSeqNo=1;
 		mCounter=0;
 		mFin=false;
-		fileName = "output"+mPortNum+".jpg";
+		fileName = "output"+mID+".jpg";
 	}
 
 	public boolean getFin(){
 		return this.mFin;
 	}
-	public int getPortNum(){
-		return this.mPortNum;
+	public int getID(){
+		return this.mID;
 	}
 	public boolean checkSeqNum(int seqNo){
 		return seqNo==mExpSeqNo;
 	}
-	public boolean checkPort(int portNum){
-		return portNum==mPortNum;
+	public boolean checkID(int id){
+		return id==mID;
 	}
 	
 	public void moveOnSeqNum(){

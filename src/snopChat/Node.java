@@ -34,8 +34,8 @@ public class Node {
 		this.mAddress = InetAddress.getByName(address);
 		this.mPort = port;
 		this.mId=nodeId;
-		mClient = new MulticastClient(address.toString(), port, dataPort);
-		mServer = new MulticastServer(address.toString(), port, dataPort2);
+		mClient = new MulticastClient(address.toString(), port, dataPort, this.mId);
+		mServer = new MulticastServer(address.toString(), port, dataPort2, this.mId);
 		}catch(Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -76,7 +76,7 @@ public class Node {
 		return this.mName;
 	}
 	public static void main(String[] args) {
-			Node test = new Node(true ,1, 50002, 50003);
+			Node test = new Node(true ,1, 50002, 50003); //String name, String address, int port, int dataPort, int dataPort2, int nodeId
 			//Node test2 = new Node(false, "2");
 			File file = null;
 			test.introduce();

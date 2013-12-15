@@ -29,7 +29,7 @@ public class MulticastClient extends Thread{
 	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet  
 
 
-	ArrayList<Details> receivingFrom;
+	ArrayList<Buffer> receivingFrom;
 
 	MulticastSocket multiSocket;
 	DatagramSocket dataSocket;
@@ -59,7 +59,7 @@ public class MulticastClient extends Thread{
 		try {
 			this.mID = id;
 			this.port= port;
-			this.receivingFrom = new ArrayList<Details>();
+			this.receivingFrom = new ArrayList<Buffer>();
 			address = InetAddress.getByName(addr);
 			multiSocket = new MulticastSocket(port);
 			dataSocket =new DatagramSocket(dataPort);
@@ -123,9 +123,9 @@ public class MulticastClient extends Thread{
 		DatagramPacket packet; 
 		int size = 0; 
 		byte seqNo;  
-		Buffer[] buffers; 
+		//Buffer[] buffers; 
 		int idNum; 
-		buffers = new Buffer[10]; 
+		//buffers = new Buffer[10]; 
 		boolean foundIDNum, allFin; 
 		allFin=false; 
 
@@ -148,7 +148,7 @@ public class MulticastClient extends Thread{
 						sendACK(packet.getData()[0], this.receivingFrom.get(this.receivingFrom.size()-1).getNodeId());
 					}
 					else{
-						this.sendACK(packet.getData()[0], index);
+						this.sendACK(packet.getData()[0], this.receivingFrom.get(index).getID());
 					}
 				}
 				else{
@@ -158,8 +158,8 @@ public class MulticastClient extends Thread{
 					idNum = packet.getData()[1]; 
 					int bufferCount=0; 
 					//check if one or more packets have being received from this port before
-					while(bufferCount<buffers.length && buffers[bufferCount]!=null && foundIDNum==false){
-						if(idNum == buffers[bufferCount].getID()){
+					while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null && foundIDNum==false){
+						if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()!=0){
 							foundIDNum=true;
 						}
 						else if(!foundIDNum){
@@ -179,33 +179,33 @@ public class MulticastClient extends Thread{
 					//if no packet has being received before
 					if(!foundIDNum){ 
 						//create new instance of buffer
-						buffers[bufferCount]= new Buffer(packet.getPort()); 
+						//buffers[bufferCount]= new Buffer(packet.getPort()); 
 						seqNo = data[0]; //get seq num
 						data= packet.getData();// reserve buffer to receive image 
-						terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum()+" "+ packet.getPort());  
-						if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkID(idNum)){ //check if it really is the first packet
+						terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum()+" "+ packet.getPort());  
+						if(receivingFrom.get(bufferCount).checkSeqNum(seqNo)&&receivingFrom.get(bufferCount).checkID(idNum)){ //check if it really is the first packet
 							size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();  //add size
 							terminal.println("Filesize:" + size +" sequence number "+seqNo); 
-							buffers[bufferCount].createBuffer(size); 
-							buffers[bufferCount].moveOnSeqNum(); // move on the expected seq num
+							receivingFrom.get(bufferCount).createBuffer(size); 
+							receivingFrom.get(bufferCount).moveOnSeqNum(); // move on the expected seq num
 						}
-						sendACK((byte)(buffers[bufferCount].getExpSeqNum()), idNum); // send an ack for the next packet expected from this port
+						sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); // send an ack for the next packet expected from this port
 					} 
 
 					//otherwise if a packet has being received
 					else{ 
 						seqNo = data[0];  
-						terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+buffers[bufferCount].getExpSeqNum() +"  "+ packet.getPort()); 
+						terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum() +"  "+ packet.getPort()); 
 						//if this packet is the next packet expected for this port add it to the array
-						if(buffers[bufferCount].checkSeqNum(seqNo)&&buffers[bufferCount].checkID(idNum)){ //check it is the right packet
-							terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + buffers[bufferCount].getCounter() + " - Payload: "+(packet.getLength()-1));    
+						if(receivingFrom.get(bufferCount).checkSeqNum(seqNo)&&receivingFrom.get(bufferCount).checkID(idNum)){ //check it is the right packet
+							terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + receivingFrom.get(bufferCount).getCounter() + " - Payload: "+(packet.getLength()-1));    
 
-							buffers[bufferCount].copyIn(packet, data); 
-							buffers[bufferCount].counterIncrease((packet.getLength()-1)) ; 
-							buffers[bufferCount].moveOnSeqNum(); 
-							buffers[bufferCount].checkFin(); 
+							receivingFrom.get(bufferCount).copyIn(packet, data); 
+							receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-1)) ; 
+							receivingFrom.get(bufferCount).moveOnSeqNum(); 
+							receivingFrom.get(bufferCount).checkFin(); 
 						} 
-						sendACK((byte)(buffers[bufferCount].getExpSeqNum()), idNum); //send an ack for the next packet expected
+						sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
 
 					}
 				} 
@@ -215,8 +215,8 @@ public class MulticastClient extends Thread{
 				e.printStackTrace(); 
 			}    
 			allFin=true; 
-			for(int i=0; i<buffers.length && buffers[i]!=null; i++){ 
-				if(!buffers[i].getFin()){ 
+			for(int i=0; i<receivingFrom.size() && receivingFrom.get(i)!=null; i++){ 
+				if(!receivingFrom.get(i).getFin()){ 
 					allFin=false; 
 				} 
 			} 
@@ -231,13 +231,13 @@ public class MulticastClient extends Thread{
 	 * @param packet received
 	 */
 	private void sendACK(byte seqNo, int id){ 
-		int detailID;
-		for(detailID=0; detailID<this.receivingFrom.size(); detailID++){
-			if(this.receivingFrom.get(detailID).getNodeId()==id){
+		int detailIndex;
+		for(detailIndex=0; detailIndex<this.receivingFrom.size(); detailIndex++){
+			if(this.receivingFrom.get(detailIndex).getNodeId()==id){
 				break;
 			}
 		}
-		if(detailID==this.receivingFrom.size()-1 && id != this.receivingFrom.get(detailID).getNodeId()){
+		if(detailIndex==this.receivingFrom.size()-1 && id != this.receivingFrom.get(detailIndex).getNodeId()){
 			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			System.exit(-1);
 		}
@@ -246,7 +246,7 @@ public class MulticastClient extends Thread{
 		DatagramPacket ACKpacket; 
 		try { 
 			ACK[0] =  (seqNo); 
-			ACKpacket = new DatagramPacket(ACK, ACK.length, this.receivingFrom.get(detailID).getmAddressInet(), this.receivingFrom.get(detailID).getServerPort()); 
+			ACKpacket = new DatagramPacket(ACK, ACK.length, this.receivingFrom.get(detailIndex).getmAddressInet(), this.receivingFrom.get(detailIndex).getServerPort()); 
 			dataSocket.send(ACKpacket); 
 			terminal.println("ACK "+seqNo+" sent " +ACK); 
 		} catch (SocketException e) { 
@@ -273,13 +273,13 @@ public class MulticastClient extends Thread{
 
 	}
 
-	public Details receiveDetails(DatagramPacket packet){
+	public Buffer receiveDetails(DatagramPacket packet){
 		
 		String[] details = new String(packet.getData()).split("/");										//details[0] "details"
 		for(int i = 0; i<details.length; i++){
 			terminal.println(details[i]);
 		}
-		return new Details(Integer.parseInt(details[3]), 0, Integer.parseInt(details[2]), details[1]);	//details[1] "localhost"
+		return new Buffer(Integer.parseInt(details[3]), Integer.parseInt(details[2]), details[1]);	//details[1] "localhost"
 		//details[2] port
 		//details[3] id
 	}

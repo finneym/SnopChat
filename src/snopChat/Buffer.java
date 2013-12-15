@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class Buffer {
 	//static final String FILENAME = "output.jpg";
@@ -16,14 +18,53 @@ public class Buffer {
 	private int mExpSeqNo;
 	private int mCounter;
 	private boolean mFin;
-	private int mSize;
-
-	Buffer( int id){
-		mID =id;
+	private int mSize=0;
+	private int mClientPort;
+	private int mServerPort;
+	//private int mNodeId;
+	private String mAddress;
+	
+	Buffer( int node, int ServerPort, String address){
+		this.mServerPort=ServerPort;
+		this.mAddress = address;
+		mID =node;
 		mExpSeqNo=1;
 		mCounter=0;
 		mFin=false;
 		fileName = "output"+mID+".jpg";
+	}
+	
+	public InetAddress getmAddressInet(){
+		try {
+			return InetAddress.getByName(mAddress);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	public String getmAddress() {
+		return mAddress;
+	}
+
+	/**
+	 * @return the mClientPort
+	 */
+	public int getClientPort() {
+		return mClientPort;
+	}
+
+	/**
+	 * @return the mServerPort
+	 */
+	public int getServerPort() {
+		return mServerPort;
+	}
+
+	/**
+	 * @return the mNodeId
+	 */
+	public int getNodeId() {
+		return mID;
 	}
 
 	public boolean getFin(){
@@ -52,6 +93,9 @@ public class Buffer {
 	}
 	public int getExpSeqNum(){
 		return this.mExpSeqNo;
+	}
+	public int getSize(){
+		return mSize;
 	}
 	public void createBuffer(int size){
 		mBuffer = new byte[size];

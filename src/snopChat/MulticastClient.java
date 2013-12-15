@@ -59,6 +59,7 @@ public class MulticastClient extends Thread{
 		try {
 			this.mID = id;
 			this.port= port;
+			this.receivingFrom = new ArrayList<Details>();
 			address = InetAddress.getByName(addr);
 			multiSocket = new MulticastSocket(port);
 			dataSocket =new DatagramSocket(dataPort);
@@ -139,10 +140,16 @@ public class MulticastClient extends Thread{
 				//will need to change all this if port is not individual to sender
 				foundIDNum=false; 
 				multiSocket.receive(packet);//receive packet 
-				String msg = new String(data, 0, packet.getLength());
+				String msg = new String(data, 1, packet.getLength()-1);
 				if(msg.substring(0, 7).equals("details")){
-					this.receivingFrom.add(this.receiveDetails(packet));
-					sendACK(packet.getData()[0], this.receivingFrom.get(this.receivingFrom.size()-1).getNodeId());
+					int index = this.isInReceiveDetails(packet);
+					if(index==-1){
+						this.receivingFrom.add(this.receiveDetails(packet));
+						sendACK(packet.getData()[0], this.receivingFrom.get(this.receivingFrom.size()-1).getNodeId());
+					}
+					else{
+						this.sendACK(packet.getData()[0], index);
+					}
 				}
 				else{
 					terminal.println("Received: " + new String(data, 0, packet.getLength()));
@@ -267,10 +274,22 @@ public class MulticastClient extends Thread{
 	}
 
 	public Details receiveDetails(DatagramPacket packet){
+		
 		String[] details = new String(packet.getData()).split("/");										//details[0] "details"
+		for(int i = 0; i<details.length; i++){
+			terminal.println(details[i]);
+		}
 		return new Details(Integer.parseInt(details[3]), 0, Integer.parseInt(details[2]), details[1]);	//details[1] "localhost"
 		//details[2] port
 		//details[3] id
+	}
+	public int isInReceiveDetails(DatagramPacket packet){
+		for(int i = 0; i<this.receivingFrom.size(); i++){
+			if(this.receivingFrom.get(i).getNodeId() == Integer.parseInt(new String(packet.getData()).split("/")[3])){
+				return i;
+			}
+		}
+		return -1;
 	}
 }
 

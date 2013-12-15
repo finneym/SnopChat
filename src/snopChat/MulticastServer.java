@@ -269,8 +269,11 @@ public class MulticastServer extends Thread{
 		//details address port id
 		
 		try {
-			String detailsToSend = "details/localhost/"+this.dataSocket.getLocalPort()+"/"+mID;
-			DatagramPacket packet = new DatagramPacket(detailsToSend.getBytes(), detailsToSend.length(), address, port);
+			String detailsToSend = "details/localhost/"+this.dataSocket.getLocalPort()+"/"+mID+"/";
+			byte[] data = new byte[detailsToSend.length()+1];
+			System.arraycopy(detailsToSend.getBytes(), 0, data, 1, detailsToSend.length());
+			data[0] = (byte) seqNo;
+			DatagramPacket packet = new DatagramPacket(data, data.length, address, port);
 			multiSocket.send(packet);
 			recieveACK(seqNo, packet,maxSeqNo);//will not proceed unless correct ACK is received 
 		} catch (IOException e) {

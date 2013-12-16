@@ -9,7 +9,7 @@ import java.net.UnknownHostException;
 
 public class Buffer {
 	//static final String FILENAME = "output.jpg";
-	private final int MAX_SEQ_NUM =15;
+	private final int MAX_SEQ_NUM =126;
 	private String fileName;
 	private byte[] mBuffer;
 	private int mID;
@@ -18,20 +18,22 @@ public class Buffer {
 	private int mExpSeqNo;
 	private int mCounter;
 	private boolean mFin;
-	private int mSize=0;
+	private int mSize;
 	private int mClientPort;
 	private int mServerPort;
 	//private int mNodeId;
 	private InetAddress mAddress;
-	
-	Buffer( int node, int ServerPort, InetAddress address){
+
+	Buffer( int node, int ServerPort, InetAddress address, int clientID){
 		this.mServerPort=ServerPort;
 		this.mAddress = address;
 		mID =node;
-		mExpSeqNo=1;
+		mExpSeqNo=0;
 		mCounter=0;
 		mFin=false;
-		fileName = "output"+mID+".jpg";
+		fileName = "output-Server-"+node+"-Client-"+clientID+".jpg";
+		mSize=0;
+		
 	}
 	
 	public InetAddress getmAddressInet(){
@@ -107,8 +109,8 @@ public class Buffer {
 	}
 
 	public void copyIn(DatagramPacket packet, byte[] data){
-		int lengthCopy =(packet.getLength()-1);
-		System.arraycopy(data, 1, mBuffer, mCounter, lengthCopy);
+		int lengthCopy =(packet.getLength()-2);
+		System.arraycopy(data, 2, mBuffer, mCounter, lengthCopy);
 	}
 	public void checkFin(){
 		if(!(this.mCounter<mSize)){

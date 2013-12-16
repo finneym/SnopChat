@@ -126,7 +126,8 @@ public class MulticastClient extends Thread{
 		//Buffer[] buffers; 
 		int idNum; 
 		//buffers = new Buffer[10]; 
-		boolean foundIDNum, allFin; 
+		int receivedBefore;
+		boolean allFin; 
 		allFin=false; 
 
 
@@ -134,35 +135,51 @@ public class MulticastClient extends Thread{
 		while(!allFin){  
 
 			try { 
-				data= new byte[MAX_BUFFER+1];  // receive first packet with size of image as payload 
+				data= new byte[MAX_BUFFER+2];  // receive first packet with size of image as payload 
 				packet= new DatagramPacket(data, data.length); 
 
 				//will need to change all this if port is not individual to sender
-				foundIDNum=false; 
 				multiSocket.receive(packet);//receive packet 
 				String msg = new String(data, 1, packet.getLength()-1);
-				if(msg.substring(0, 7).equals("details")){
+				if(msg.length()>=7 && msg.substring(0, 7).equals("details")){
 					int index = this.isInReceiveDetails(packet);
 					if(index==-1){
 						this.receivingFrom.add(this.receiveDetails(packet));
-						sendACK(packet.getData()[0], this.receivingFrom.get(this.receivingFrom.size()-1).getNodeId());
+						receivingFrom.get(this.receivingFrom.size()-1).moveOnSeqNum(); // move on the expected seq num
+						sendACK((byte)receivingFrom.get(this.receivingFrom.size()-1).getExpSeqNum(), this.receivingFrom.get(this.receivingFrom.size()-1).getNodeId());
 					}
 					else{
-						this.sendACK(packet.getData()[0], this.receivingFrom.get(index).getID());
+						this.sendACK((byte)receivingFrom.get(index).getExpSeqNum(), this.receivingFrom.get(index).getID());
 					}
 				}
 				else{
-					terminal.println("Received: " + new String(data, 0, packet.getLength()));
+					//terminal.println("Received: " + new String(data, 0, packet.getLength()));
 					//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
 					//if(packet.getLength()>1){
 					idNum = packet.getData()[1]; 
 					int bufferCount=0; 
 					//check if one or more packets have being received from this port before
-					while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null && foundIDNum==false){
+//					while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null && receivedBefore==false){
+//						int gotid = this.receivingFrom.get(bufferCount).getID();
+//						int sizeOfList = this.receivingFrom.get(bufferCount).getSize();
+//						if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()!=0){
+//							receivedBefore=true;
+//						}
+//						else if(!receivedBefore){
+//							bufferCount+=1;
+//						}
+//					}
+					receivedBefore=0; 
+					while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null){
 						if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()!=0){
-							foundIDNum=true;
+							receivedBefore=2;
+							break;
 						}
-						else if(!foundIDNum){
+						else if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()==0){
+							receivedBefore = 1;
+							break;
+						}
+						else{
 							bufferCount+=1;
 						}
 					}
@@ -177,14 +194,14 @@ public class MulticastClient extends Thread{
 						} 
 					} */
 					//if no packet has being received before
-					if(!foundIDNum){ 
+					if(receivedBefore == 1){ 
 						//create new instance of buffer
 						//buffers[bufferCount]= new Buffer(packet.getPort()); 
 						seqNo = data[0]; //get seq num
 						data= packet.getData();// reserve buffer to receive image 
-						terminal.println("reveived seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum()+" "+ packet.getPort());  
+						terminal.println("received seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum()+" "+ packet.getPort());  
 						if(receivingFrom.get(bufferCount).checkSeqNum(seqNo)&&receivingFrom.get(bufferCount).checkID(idNum)){ //check if it really is the first packet
-							size= (Integer.valueOf(new String(data, 1, packet.getLength()-1))).intValue();  //add size
+							size= (Integer.valueOf(new String(data, 2, packet.getLength()-2))).intValue();  //add size
 							terminal.println("Filesize:" + size +" sequence number "+seqNo); 
 							receivingFrom.get(bufferCount).createBuffer(size); 
 							receivingFrom.get(bufferCount).moveOnSeqNum(); // move on the expected seq num
@@ -193,15 +210,15 @@ public class MulticastClient extends Thread{
 					} 
 
 					//otherwise if a packet has being received
-					else{ 
+					else if (receivedBefore == 2){ 
 						seqNo = data[0];  
 						terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum() +"  "+ packet.getPort()); 
 						//if this packet is the next packet expected for this port add it to the array
 						if(receivingFrom.get(bufferCount).checkSeqNum(seqNo)&&receivingFrom.get(bufferCount).checkID(idNum)){ //check it is the right packet
-							terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + receivingFrom.get(bufferCount).getCounter() + " - Payload: "+(packet.getLength()-1));    
+							terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + receivingFrom.get(bufferCount).getCounter() + " - Payload: "+(packet.getLength()-2));    
 
 							receivingFrom.get(bufferCount).copyIn(packet, data); 
-							receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-1)) ; 
+							receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-2)) ; 
 							receivingFrom.get(bufferCount).moveOnSeqNum(); 
 							receivingFrom.get(bufferCount).checkFin(); 
 						} 
@@ -279,7 +296,7 @@ public class MulticastClient extends Thread{
 		for(int i = 0; i<details.length; i++){
 			terminal.println(details[i]);
 		}
-		return new Buffer(Integer.parseInt(details[3]), Integer.parseInt(details[2]), packet.getAddress());	//details[1] "localhost"
+		return new Buffer(Integer.parseInt(details[3]), Integer.parseInt(details[2]), packet.getAddress(), mID);	//details[1] "localhost"
 		//details[2] port
 		//details[3] id
 	}

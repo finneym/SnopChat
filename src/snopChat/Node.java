@@ -59,7 +59,7 @@ public class Node {
 		client.start();
 	}
 	
-//	public void send(File file){
+	public void send(){
 //		Thread[] thread = new Thread[2];
 //		
 //		thread[0] = new Thread(mServer);
@@ -67,21 +67,21 @@ public class Node {
 //		for(int i = 0; i<thread.length;i++){
 //			thread[i].start();
 //		}
-//		if(this.fileToSend){
-//			mServer.start();
-//		}
-//		mClient.start();
-//	}
-	
-	
-	public void send(){
-		Thread[] thread = new Thread[2];
-		thread[0] = new Thread(mServer);
-		thread[1] = new Thread(mClient);
-		for(int i = 0; i<thread.length;i++){
-			thread[i].start();
+		if(this.fileToSend){
+			mServer.start();
 		}
+		mClient.start();
 	}
+	
+	
+//	public void send(){
+//		Thread[] thread = new Thread[2];
+//		thread[0] = new Thread(mServer);
+//		thread[1] = new Thread(mClient);
+//		for(int i = 0; i<thread.length;i++){
+//			thread[i].start();
+//		}
+//	}
 	
 //	String getName(){
 //		return this.mName;
@@ -89,12 +89,13 @@ public class Node {
 	
 	public static void main(String[] args) throws InterruptedException, IOException {
 			Node test = new Node(true ,1, 50002, 50003, MCAST_PORT1); // true if sending image, nodeID, clientPort, serverPort, mcastPort for node
-//			Node test2 = new Node(false, 2, 50004, 50005, MCAST_PORT2);
+			Node test2 = new Node(false, 2, 50004, 50005, MCAST_PORT1);
 			File file = null;
-			test.introduce();
+			//test.introduce();
 			test.send();
 //			test2.introduce();
-//			test2.send();
+			test2.send();
+			
 	}
 }
 

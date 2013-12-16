@@ -30,7 +30,7 @@ public class MulticastServer extends Thread{
 	public static final int DATA_PORT = 50002; 
 	public static final int DEFAULT_ID = -1;
 	public static final int MAX_BUFFER = 1024; 				// Maximum size for data in a packet
-	
+	public static final int MAX_SEQ = 126;
 	static ArrayList<Integer> subscrNodes;
 	
 	MulticastSocket multiSocket;
@@ -211,7 +211,7 @@ public class MulticastServer extends Thread{
 		int size; //size of the image
 		int counter; //to check when all of image is sent
 		byte seqNo; //number to send with packet in first byte of data2
-		byte maxSeqNo = 15; 
+		byte maxSeqNo = MAX_SEQ; 
 
 		try {    
 			
@@ -226,12 +226,14 @@ public class MulticastServer extends Thread{
 			seqNo =0; //set sequence number to equal 0 to begin (if changeing remember to change expected seq number in the buffer class
 			
 			sendDetails(seqNo, maxSeqNo);	
+			seqNo++;
 			
 			data= (Integer.toString(size)).getBytes();  // 1st packet contains the length only 
-			data2 = new byte[data.length +1]; //create a new data array of length one greater than the origional
+			data2 = new byte[data.length +2]; //create a new data array of length one greater than the origional
 			data2[0] = seqNo; // add a sequence number to the first byte of this new array
-			for(int i=1; i<data2.length; i++){ //copy old array into rest of new array 
-				data2[i]=data[i-1]; 
+			data2[1] = (byte) this.mID;
+			for(int i=2; i<data2.length; i++){ //copy old array into rest of new array 
+				data2[i]=data[i-2]; 
 			} 
 			packet= new DatagramPacket(data2, data2.length, address, port); //create a new packet from the data2 array
 			multiSocket.send(packet); 
@@ -247,15 +249,16 @@ public class MulticastServer extends Thread{
 					seqNo++; 
 				} 
 
-				data= new byte[(counter+MAX_BUFFER<size) ? MAX_BUFFER+1 : size-counter+1];  // The length of the packet is either MTU or a remainder 
+				data= new byte[(counter+MAX_BUFFER<size) ? MAX_BUFFER+2 : size-counter+2];  // The length of the packet is either MTU or a remainder 
 				data[0]=seqNo; //data 0 is the sequence number
-				java.lang.System.arraycopy(buffer, counter, data, 1, (data.length-1)); //copy data into buffer leaving out the sequence number
-				terminal.println("Counter: " + counter + " - Payload size: " + (data.length-1) +" sequence number: "+seqNo+" port " +multiSocket.getLocalPort()); 
+				data[1]=(byte)this.mID;
+				java.lang.System.arraycopy(buffer, counter, data, 2, (data.length-2)); //copy data into buffer leaving out the sequence number
+				terminal.println("Counter: " + counter + " - Payload size: " + (data.length-2) +" sequence number: "+seqNo+" port " +multiSocket.getLocalPort()); 
 
 				packet= new DatagramPacket(data, data.length, address, port); //creat new packet
 				multiSocket.send(packet); //send it
 				recieveACK(seqNo, packet, maxSeqNo);//will not proceed unless correct ACK is received 
-				counter+= (data.length-1); //add the length of the packet sent (not counting the sequence number) to the counter
+				counter+= (data.length-2); //add the length of the packet sent (not counting the sequence number) to the counter
 
 			} while (counter<size); // while not all image sent
 

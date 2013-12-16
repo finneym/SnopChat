@@ -82,9 +82,11 @@ public class Node {
 			thread[i].start();
 		}
 	}
-	String getName(){
-		return this.mName;
-	}
+	
+//	String getName(){
+//		return this.mName;
+//	}
+	
 	public static void main(String[] args) throws InterruptedException, IOException {
 			Node test = new Node(true ,1, 50002, 50003, MCAST_PORT1); // true if sending image, nodeID, clientPort, serverPort, mcastPort for node
 //			Node test2 = new Node(false, 2, 50004, 50005, MCAST_PORT2);

@@ -16,7 +16,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
-import java.util.Date;
+//import java.util.Date;
 
 import tcdIO.*;
 /**
@@ -30,7 +30,9 @@ public class MulticastServer extends Thread{
 	public static final int DATA_PORT = 50002; 
 	public static final int DEFAULT_ID = -1;
 	public static final int MAX_BUFFER = 1024; 				// Maximum size for data in a packet
-	//ArrayList<Node> nodeList;
+	
+	static ArrayList<Integer> subscrNodes;
+	
 	MulticastSocket multiSocket;
 	DatagramSocket dataSocket;
 	InetAddress address;
@@ -39,6 +41,7 @@ public class MulticastServer extends Thread{
 	int mID;
 
 	static final String FILENAME = "input.jpg";
+	static final int HELLO_SIZE=8;
 
 //	/**
 //	 * Default Constructor
@@ -79,12 +82,12 @@ public class MulticastServer extends Thread{
 
 /*method that sends out a hello message to everyone subscribed to the multicast address*/
 	public Runnable sendHello() throws InterruptedException{
-			String msg="hello/" + dataSocket.getPort() + "/" + mID + "/"; // sends 'hello', the port number?? and node ID
+			String msg="hello/" + mID + "/"; // sends 'hello' and node ID
 			DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(), address, port);
 			try {
-	//make it loop around
-					multiSocket.send(packet);
-					terminal.println("Sent - "+msg);
+	//make it loop around, maybe?
+				multiSocket.send(packet);
+				terminal.println("Sent - "+msg);
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -95,21 +98,32 @@ public class MulticastServer extends Thread{
 		
 /*method to receive hello messages from everyone subscribed to the multicast address*/
 	public Runnable receiveHello() throws IOException{
-			byte[] data; 
-			DatagramPacket packet;
-	//make it loop around
-					data= new byte[MAX_BUFFER+2];
-					packet= new DatagramPacket(data, data.length);
-					multiSocket.receive(packet);//receive packet 
-					String msg = new String(data, 2, packet.getLength()-2);
+		byte[] data; 
+		DatagramPacket packet;
+	//make it loop around, maybe?
+		data= new byte[HELLO_SIZE];
+		packet= new DatagramPacket(data, data.length);
+		multiSocket.receive(packet);//receive packet 
+		String msg = new String(data, 2, packet.getLength()-2);
 		/*check if the received packet is a 'hello' packet*/
-				if(msg.substring(2, 6).equals("hello")){
-					String[] info =msg.split("/");
-					int portNo=Integer.parseInt(info[1]);
-					int nodeID=Integer.parseInt(info[2]);
-					
+			if(msg.substring(2, 6).equals("hello")){
+				String[] info =msg.split("/");
+				int nodeID=Integer.parseInt(info[1]);
+				/*check if a new node*/
+				if(!isIDsbscr(nodeID)){
+					subscrNodes.add(nodeID);
 				}
+			}
 		return null;
+	}
+	
+	/*method to check for an ID in the subscribedNodes array*/
+	public static boolean isIDsbscr(int id){
+		for(int i=0;i<subscrNodes.size();i++){
+			
+		}
+			
+		return true;
 	}
 		
 

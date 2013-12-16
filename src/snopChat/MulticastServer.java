@@ -241,11 +241,15 @@ public class MulticastServer extends Thread{
 		byte[] ACK= new byte[1]; 
 		DatagramPacket ACKpacket; //new packet to receive ack
 		ACKpacket = new DatagramPacket(ACK, ACK.length); 
+
 		try { 
 			while(!positiveACKRecieved) { //while a positive ack is not received
 				try { 
+					do{
+					ACKpacket = new DatagramPacket(ACK, ACK.length);
 					dataSocket.setSoTimeout(100); //set time out time
 					dataSocket.receive(ACKpacket); //receive packer
+					}while(!ACKpacket.getAddress().equals(InetAddress.getLocalHost()));		//loops until the received item is not from the local host
 					positiveACKRecieved = (ACK[0]== (ACKNum==maxSeqNum? 0:ACKNum+1));// if ack number received is equal to the number sent +1 (0 if number sent was max number) 
 					if(positiveACKRecieved){ //if it was the right ack 
 						terminal.println("ACK: " + ACK[0] +" recieved"+ACK); 
@@ -269,7 +273,7 @@ public class MulticastServer extends Thread{
 		//details address port id
 		
 		try {
-			String detailsToSend = "details/localhost/"+this.dataSocket.getLocalPort()+"/"+mID+"/";
+			String detailsToSend = "details/"+"/"+this.dataSocket.getLocalPort()+"/"+mID+"/";
 			byte[] data = new byte[detailsToSend.length()+1];
 			System.arraycopy(detailsToSend.getBytes(), 0, data, 1, detailsToSend.length());
 			data[0] = (byte) seqNo;

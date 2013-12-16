@@ -279,7 +279,7 @@ public class MulticastClient extends Thread{
 		for(int i = 0; i<details.length; i++){
 			terminal.println(details[i]);
 		}
-		return new Buffer(Integer.parseInt(details[3]), Integer.parseInt(details[2]), details[1]);	//details[1] "localhost"
+		return new Buffer(Integer.parseInt(details[3]), Integer.parseInt(details[2]), packet.getAddress());	//details[1] "localhost"
 		//details[2] port
 		//details[3] id
 	}

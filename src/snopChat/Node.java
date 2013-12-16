@@ -47,8 +47,7 @@ public class Node {
 	}
 	
 	public void introduce() throws InterruptedException, IOException{
-		 // add receive hello && fix stuff so that image && hellos don't mix up
-		Thread server = new Thread(mServer.sendHello());
+		Thread server = new Thread(mServer.sendHello()); // add receive hello
 		if(this.fileToSend){
 			server.start();
 			
@@ -57,19 +56,21 @@ public class Node {
 		client.start();
 	}
 	
-	public void send(File file){
-//		Thread[] thread = new Thread[2];
-//		
-//		thread[0] = new Thread(mServer);
-//		thread[1] = new Thread(mClient);
-//		for(int i = 0; i<thread.length;i++){
-//			thread[i].start();
+//	public void send(File file){
+////		Thread[] thread = new Thread[2];
+////		
+////		thread[0] = new Thread(mServer);
+////		thread[1] = new Thread(mClient);
+////		for(int i = 0; i<thread.length;i++){
+////			thread[i].start();
+////		}
+//		if(this.fileToSend){
+//			mServer.start();
 //		}
-		if(this.fileToSend){
-			mServer.start();
-		}
-		mClient.start();
-	}
+//		mClient.start();
+//	}
+	
+	
 	public void send(){
 		Thread[] thread = new Thread[2];
 		thread[0] = new Thread(mServer);

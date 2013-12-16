@@ -105,7 +105,8 @@ public class MulticastServer extends Thread{
 			if(msg.substring(2, 6).equals("hello")){
 				String[] info =msg.split("/");
 				int portNo=Integer.parseInt(info[1]);
-				int nodeID=Integer.parseInt(info[2]);		
+				int nodeID=Integer.parseInt(info[2]);
+				
 			}
 		return null;
 	}

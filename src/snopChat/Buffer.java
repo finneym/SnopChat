@@ -22,9 +22,9 @@ public class Buffer {
 	private int mClientPort;
 	private int mServerPort;
 	//private int mNodeId;
-	private String mAddress;
+	private InetAddress mAddress;
 	
-	Buffer( int node, int ServerPort, String address){
+	Buffer( int node, int ServerPort, InetAddress address){
 		this.mServerPort=ServerPort;
 		this.mAddress = address;
 		mID =node;
@@ -35,16 +35,9 @@ public class Buffer {
 	}
 	
 	public InetAddress getmAddressInet(){
-		try {
-			return InetAddress.getByName(mAddress);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			return null;
-		}
+			return mAddress;
 	}
-	public String getmAddress() {
-		return mAddress;
-	}
+	
 
 	/**
 	 * @return the mClientPort

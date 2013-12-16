@@ -26,11 +26,11 @@ import tcdIO.*;
 public class MulticastServer extends Thread{
 
 	public static final String MCAST_ADDR = "230.0.0.1";	// Hardcoded address for the multicast group
-	public static final int MCAST_PORT = 9013; 				// Hardcoded port number for the multicast group
+	//public static final int MCAST_PORT = 9013; 				// Hardcoded port number for the multicast group
 	public static final int DATA_PORT = 50002; 
 	public static final int DEFAULT_ID = -1;
 	public static final int MAX_BUFFER = 1024; 				// Maximum size for data in a packet
-	ArrayList<Node> nodeList;
+	//ArrayList<Node> nodeList;
 	MulticastSocket multiSocket;
 	DatagramSocket dataSocket;
 	InetAddress address;
@@ -45,9 +45,9 @@ public class MulticastServer extends Thread{
 	 * 
 	 * Fills an instance with the hardcoded values
 	 */
-	public MulticastServer() {
-		this(MCAST_ADDR, MCAST_PORT, DATA_PORT, DEFAULT_ID);
-	}
+//	public MulticastServer() {
+//		this(MCAST_ADDR, MCAST_PORT, DATA_PORT, DEFAULT_ID);
+//	}
 
 	/**
 	 * Constructor
@@ -76,19 +76,41 @@ public class MulticastServer extends Thread{
 		}
 	}
 
-	public Runnable sendMessage(String msg){
-		DatagramPacket packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
+/*method that sends out a hello message to everyone subscribed to the multicast address*/
+	public Runnable sendHello() throws InterruptedException{
+		String msg="hello/" + dataSocket.getPort() + "/" + this.mID + "/"; // sends 'hello', the port number?? and node ID
+		DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(), address, port);
 		try {
-			multiSocket.send(packet);
-			//System.out.println("Sent - "+msg);
-			terminal.println("Sent - "+msg);
+//make it loop around
+				multiSocket.send(packet);
+				terminal.println("Sent - "+msg);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
 		return null;
-
 	}
+	
+/*method to receive hello messages from everyone subscribed to the multicast address*/
+	public Runnable receiveHello() throws IOException{
+		byte[] data; 
+		DatagramPacket packet;
+//make it loop around
+				data= new byte[MAX_BUFFER+2];
+				packet= new DatagramPacket(data, data.length);
+				multiSocket.receive(packet);//receive packet 
+				String msg = new String(data, 2, packet.getLength()-2);
+	/*check if the received packet is a 'hello' packet*/
+			if(msg.substring(2, 6).equals("hello")){
+				String[] info =msg.split("/");
+				int portNo=Integer.parseInt(info[1]);
+				int nodeID=Integer.parseInt(info[2]);		
+			}
+		return null;
+	}
+
+	
 
 	/**
 	 * Run method
@@ -269,6 +291,7 @@ public class MulticastServer extends Thread{
 		return positiveACKRecieved; 
 	} 
 
+/*a method to send first package containing server info*/
 	public void sendDetails(int seqNo, int maxSeqNo){
 		//details address port id
 		

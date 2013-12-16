@@ -48,14 +48,6 @@ public class MulticastServer{
 
 	static final String FILENAME = "input.jpg";
 	static final int HELLO_SIZE=7;
-	
-	public Runnable getGetHello(){
-		return getHello;
-	}
-	
-	public Runnable getSendHello(){
-		return sendHello;
-	}
 
 //	/**
 //	 * Default Constructor
@@ -88,8 +80,9 @@ public class MulticastServer{
 		
 			terminal.setLocation(400, 0);
 			
-			/*declare the hello threads*/
+			subscrNodes= new ArrayList();
 			
+			/*used threads*/
 			sendHello=new Runnable(){
 				public void run(){
 						try {
@@ -145,24 +138,28 @@ public class MulticastServer{
 		DatagramPacket packet;
 		data= new byte[HELLO_SIZE];
 		packet= new DatagramPacket(data, data.length);
-		multiSocket.receive(packet);//receive packet 
-		String msg = new String(data, 2, packet.getLength()-3);
-		/*check if the received packet is a 'hello' packet*/
-			if(msg.substring(0, 5).equals("hello")){
-				String[] info =msg.split("/");
-				int nodeID=Integer.parseInt(info[1]);
-				/*check if a new node*/
-				if(!isIDsbscr(nodeID)&& mID!=nodeID){
-					subscrNodes.add(nodeID);
+		while(true){
+			multiSocket.receive(packet);//receive packet 
+			String msg = new String(data, 0, packet.getLength());
+			System.out.println("the length is "+ msg);
+			/*check if the received packet is a 'hello' packet*/
+				if(msg.substring(0, 5).equals("hello")){
+					String[] info =msg.split("/");
+					int nodeID=Integer.parseInt(info[1]);
+					/*check if a new node*/
+					if(!isIDsbscr(nodeID)&& mID!=nodeID){
+						subscrNodes.add(nodeID);
+					}
 				}
-			}
-		return null;
+		}
 	}
 	
 	/*method to check for an ID in the subscribedNodes array*/
 	public static boolean isIDsbscr(int id){
-		for(int i=0;i<subscrNodes.size();i++){
-			if(subscrNodes.get(i)==id) return true;
+			if(subscrNodes.size()!=0){
+			for(int i=0;i<subscrNodes.size();i++){
+				if(subscrNodes.get(i)==id) return true;
+			}
 		}
 		return false;
 	}

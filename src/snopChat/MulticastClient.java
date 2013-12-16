@@ -248,7 +248,7 @@ public class MulticastClient extends Thread{
 			ACK[0] =  (seqNo); 
 			ACKpacket = new DatagramPacket(ACK, ACK.length, this.receivingFrom.get(detailIndex).getmAddressInet(), this.receivingFrom.get(detailIndex).getServerPort()); 
 			dataSocket.send(ACKpacket); 
-			terminal.println("ACK "+seqNo+" sent " +ACK); 
+			terminal.println("ACK "+seqNo+" sent "); 
 		} catch (SocketException e) { 
 			e.printStackTrace(); 
 		} catch (IOException e) { 

@@ -40,14 +40,14 @@ public class MulticastServer extends Thread{
 
 	static final String FILENAME = "input.jpg";
 
-	/**
-	 * Default Constructor
-	 * 
-	 * Fills an instance with the hardcoded values
-	 */
-//	public MulticastServer() {
-//		this(MCAST_ADDR, MCAST_PORT, DATA_PORT, DEFAULT_ID);
-//	}
+//	/**
+//	 * Default Constructor
+//	 * 
+//	 * Fills an instance with the hardcoded values
+//	 */
+////	public MulticastServer() {
+////		this(MCAST_ADDR, MCAST_PORT, DATA_PORT, DEFAULT_ID);
+////	}
 
 	/**
 	 * Constructor
@@ -75,43 +75,43 @@ public class MulticastServer extends Thread{
 			System.exit(-1);
 		}
 	}
+	
 
 /*method that sends out a hello message to everyone subscribed to the multicast address*/
 	public Runnable sendHello() throws InterruptedException{
-		String msg="hello/" + dataSocket.getPort() + "/" + this.mID + "/"; // sends 'hello', the port number?? and node ID
-		DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(), address, port);
-		try {
-//make it loop around
-				multiSocket.send(packet);
-				terminal.println("Sent - "+msg);
+			String msg="hello/" + dataSocket.getPort() + "/" + mID + "/"; // sends 'hello', the port number?? and node ID
+			DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(), address, port);
+			try {
+	//make it loop around
+					multiSocket.send(packet);
+					terminal.println("Sent - "+msg);
 
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+			return null;
 		}
-		return null;
-	}
-	
+		
 /*method to receive hello messages from everyone subscribed to the multicast address*/
 	public Runnable receiveHello() throws IOException{
-		byte[] data; 
-		DatagramPacket packet;
-//make it loop around
-				data= new byte[MAX_BUFFER+2];
-				packet= new DatagramPacket(data, data.length);
-				multiSocket.receive(packet);//receive packet 
-				String msg = new String(data, 2, packet.getLength()-2);
-	/*check if the received packet is a 'hello' packet*/
-			if(msg.substring(2, 6).equals("hello")){
-				String[] info =msg.split("/");
-				int portNo=Integer.parseInt(info[1]);
-				int nodeID=Integer.parseInt(info[2]);
-				
-			}
+			byte[] data; 
+			DatagramPacket packet;
+	//make it loop around
+					data= new byte[MAX_BUFFER+2];
+					packet= new DatagramPacket(data, data.length);
+					multiSocket.receive(packet);//receive packet 
+					String msg = new String(data, 2, packet.getLength()-2);
+		/*check if the received packet is a 'hello' packet*/
+				if(msg.substring(2, 6).equals("hello")){
+					String[] info =msg.split("/");
+					int portNo=Integer.parseInt(info[1]);
+					int nodeID=Integer.parseInt(info[2]);
+					
+				}
 		return null;
 	}
-
-	
+		
 
 	/**
 	 * Run method

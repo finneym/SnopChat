@@ -126,6 +126,8 @@ public class Buffer {
 			fout.write(mBuffer, 0, mBuffer.length);
 			fout.flush();
 			fout.close();
+			DisplayImage test = new DisplayImage(fileName);
+			test.start();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

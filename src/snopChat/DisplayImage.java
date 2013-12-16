@@ -10,7 +10,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
-public class DisplayImage {
+public class DisplayImage extends Thread{
 	private String mImageName;
 
 	DisplayImage(String imageName){
@@ -26,7 +26,7 @@ public class DisplayImage {
 	class ImageFrame extends JFrame{
 
 		ImageFrame(){
-			setTitle("mImageName");
+			setTitle(mImageName);
 			setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
 			ImageComponent component = new ImageComponent();

@@ -46,15 +46,13 @@ public class Node {
 		}
 	}
 	
-	public void introduce() throws InterruptedException, IOException{
-		/*receiveHello doesn't work properly with one node
-		 * need to change the way thread are implemented when an image is added.
-		 */
-		Thread server = new Thread((ThreadGroup) mServer.sendHello(),mServer.receiveHello());
-		if(this.fileToSend){
-			server.start();
-			
-		}
+	public void introduce(){
+		new Thread(mServer.getHello).start();
+		new Thread(mServer.sendHello).start();
+//		if(this.fileToSend){
+//			new Thread(mServer.sendStuff).start();
+//			
+//		}
 		Thread client = new Thread(mClient.receiveMessage());
 		client.start();
 	}
@@ -68,7 +66,7 @@ public class Node {
 //			thread[i].start();
 //		}
 		if(this.fileToSend){
-			mServer.start();
+			new Thread(mServer.sendStuff).start();
 		}
 		mClient.start();
 	}
@@ -91,11 +89,10 @@ public class Node {
 			Node test = new Node(true ,1, 50002, 50003, MCAST_PORT1); // true if sending image, nodeID, clientPort, serverPort, mcastPort for node
 			Node test2 = new Node(false, 2, 50004, 50005, MCAST_PORT1);
 			File file = null;
-			//test.introduce();
+//			test.introduce();
 			test.send();
 //			test2.introduce();
-			test2.send();
-			
+			test2.send();		
 	}
 }
 

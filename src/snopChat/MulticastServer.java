@@ -23,7 +23,7 @@ import tcdIO.*;
  * Server 
  * Skeleton code for Multicast server
  */
-public class MulticastServer extends Thread{
+public class MulticastServer{
 
 	public static final String MCAST_ADDR = "230.0.0.1";	// Hardcoded address for the multicast group
 	//public static final int MCAST_PORT = 9013; 				// Hardcoded port number for the multicast group
@@ -31,7 +31,13 @@ public class MulticastServer extends Thread{
 	public static final int DEFAULT_ID = -1;
 	public static final int MAX_BUFFER = 1024; 				// Maximum size for data in a packet
 	public static final int MAX_SEQ = 126;
+	
 	static ArrayList<Integer> subscrNodes;
+	
+	/*used threads*/
+	public Runnable sendHello;
+	public Runnable getHello;
+	public Runnable sendStuff;
 	
 	MulticastSocket multiSocket;
 	DatagramSocket dataSocket;
@@ -41,7 +47,15 @@ public class MulticastServer extends Thread{
 	int mID;
 
 	static final String FILENAME = "input.jpg";
-	static final int HELLO_SIZE=8;
+	static final int HELLO_SIZE=7;
+	
+	public Runnable getGetHello(){
+		return getHello;
+	}
+	
+	public Runnable getSendHello(){
+		return sendHello;
+	}
 
 //	/**
 //	 * Default Constructor
@@ -71,7 +85,36 @@ public class MulticastServer extends Thread{
 			multiSocket.joinGroup(address);
 			terminal.setTitle("Server  Port - " + this.port + "  Address - " + address.toString());
 			//socket.setLoopbackMode(true);
+		
 			terminal.setLocation(400, 0);
+			
+			/*declare the hello threads*/
+			
+			sendHello=new Runnable(){
+				public void run(){
+						try {
+							MulticastServer.this.sendHello();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+				}
+			};
+			
+			getHello=new Runnable(){
+				public void run(){
+					try{
+						MulticastServer.this.receiveHello();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			};	
+			
+			sendStuff=new Runnable(){
+				public void run(){
+					MulticastServer.this.sendThings(FILENAME);
+				}
+			};
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -84,33 +127,32 @@ public class MulticastServer extends Thread{
 	public Runnable sendHello() throws InterruptedException{
 			String msg="hello/" + mID + "/"; // sends 'hello' and node ID
 			DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(), address, port);
-			try {
-	//make it loop around, maybe?
-				multiSocket.send(packet);
-				terminal.println("Sent - "+msg);
-
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(-1);
-			}
-			return null;
+			while(true){
+				try {
+					multiSocket.send(packet);
+					terminal.println("Sent - "+msg);
+	
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(-1);
+				}
+			}	
 		}
 		
 /*method to receive hello messages from everyone subscribed to the multicast address*/
 	public Runnable receiveHello() throws IOException{
 		byte[] data; 
 		DatagramPacket packet;
-	//make it loop around, maybe?
 		data= new byte[HELLO_SIZE];
 		packet= new DatagramPacket(data, data.length);
 		multiSocket.receive(packet);//receive packet 
-		String msg = new String(data, 2, packet.getLength()-2);
+		String msg = new String(data, 2, packet.getLength()-3);
 		/*check if the received packet is a 'hello' packet*/
-			if(msg.substring(2, 6).equals("hello")){
+			if(msg.substring(0, 5).equals("hello")){
 				String[] info =msg.split("/");
 				int nodeID=Integer.parseInt(info[1]);
 				/*check if a new node*/
-				if(!isIDsbscr(nodeID)){
+				if(!isIDsbscr(nodeID)&& mID!=nodeID){
 					subscrNodes.add(nodeID);
 				}
 			}
@@ -120,10 +162,9 @@ public class MulticastServer extends Thread{
 	/*method to check for an ID in the subscribedNodes array*/
 	public static boolean isIDsbscr(int id){
 		for(int i=0;i<subscrNodes.size();i++){
-			
+			if(subscrNodes.get(i)==id) return true;
 		}
-			
-		return true;
+		return false;
 	}
 		
 
@@ -134,7 +175,7 @@ public class MulticastServer extends Thread{
 	 * The method will reply with a message containing the current date information
 	 * if a client sends a message that contains the string "Date?". 
 	 */
-	public void run() {
+	//public void run() {
 		/*		//terminal.println("Testing");
 		DatagramPacket packet= null;
 		byte[] buffer= null;
@@ -192,8 +233,10 @@ public class MulticastServer extends Thread{
 		} catch(Exception e) {
 			e.printStackTrace();
 		}*/
-		sendThings(FILENAME);
-	}
+		
+		
+	//	sendThings(FILENAME);
+	//}
 
 	/**
 	 * from working version of stop and wait

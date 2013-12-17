@@ -68,7 +68,7 @@ public class Node {
 		if(this.fileToSend){
 			new Thread(mServer.sendStuff).start();
 		}
-		mClient.start();
+		new Thread(mClient).start();
 	}
 	/**
 	 * checks if a file exists and then gets it read to send

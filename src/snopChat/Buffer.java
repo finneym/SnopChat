@@ -128,6 +128,16 @@ public class Buffer {
 			fout.close();
 			DisplayImage imageDisplay = new DisplayImage(fileName); 
 			imageDisplay.start();
+			
+			try {
+				Thread.sleep(10000);
+				imageDisplay.off();
+				file.delete();
+				
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

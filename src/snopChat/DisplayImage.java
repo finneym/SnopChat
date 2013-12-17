@@ -12,17 +12,26 @@ import javax.swing.JFrame;
 
 public class DisplayImage extends Thread{
 	private String mImageName;
-
+	private ImageFrame frame;
 	DisplayImage(String imageName){
 		this.mImageName=imageName;
 	}
 
 	public void run(){
-		ImageFrame frame = new ImageFrame();
+		frame = new ImageFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 	}
 
+	public void off(){
+		frame.setVisible(false);
+//		try {
+//			Thread.currentThread().join();
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+	}
 	class ImageFrame extends JFrame{
 
 		ImageFrame(){

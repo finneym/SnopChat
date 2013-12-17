@@ -122,6 +122,7 @@ public class MulticastServer{
 			DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(), address, port);
 			while(true){
 				try {
+					wait(1000); //think constant sending was makeing program slow... maybe
 					multiSocket.send(packet);
 					//terminal.println("Sent - "+msg);
 					System.out.println("Sent - "+msg); //just so we can see the actually image stuff in the terminal
@@ -144,7 +145,8 @@ public class MulticastServer{
 			String msg = new String(data, 0, packet.getLength());
 			System.out.println("the length is "+ msg);
 			/*check if the received packet is a 'hello' packet*/
-				if(msg.substring(0, 5).equals("hello")){
+			//if(msg.substring(0, 5).equals("hello")){				
+			if(msg.contains("hello")){ // was gettting string index out of bounds exception so swaped to this to see if made a difference (think it did)
 					String[] info =msg.split("/");
 					int nodeID=Integer.parseInt(info[1]);
 					/*check if a new node*/
@@ -322,9 +324,12 @@ public class MulticastServer{
 		byte[] ACK= new byte[1]; 
 		DatagramPacket ACKpacket; //new packet to receive ack
 		ACKpacket = new DatagramPacket(ACK, ACK.length); 
+		DatagramPacket[] allACKs = new DatagramPacket[subscrNodes.size()];
+		boolean receivedBefore;
+		boolean allPositiveACKRecieved=false;
 
 		try { 
-			while(!positiveACKRecieved) { //while a positive ack is not received
+			while(!allPositiveACKRecieved) { //while a positive ack is not received
 				try { 
 					do{
 					ACKpacket = new DatagramPacket(ACK, ACK.length);
@@ -333,7 +338,19 @@ public class MulticastServer{
 					}while(!ACKpacket.getAddress().equals(InetAddress.getLocalHost()));		//loops until the received item is not from the local host
 					positiveACKRecieved = (ACK[0]== (ACKNum==maxSeqNum? 0:ACKNum+1));// if ack number received is equal to the number sent +1 (0 if number sent was max number) 
 					if(positiveACKRecieved){ //if it was the right ack 
-						terminal.println("ACK: " + ACK[0] +" recieved"+ACK); 
+						receivedBefore=false;;
+						int i;
+						for(i=0; i<allACKs.length && allACKs[i]!=null; i++){
+							if(allACKs[i].equals(ACKpacket)){
+								receivedBefore=true;
+								break;
+							}
+						}
+						terminal.println("ACK: " + ACK[0] +" recieved "+i);
+						if(!receivedBefore && i<allACKs.length){
+							allACKs[i]=ACKpacket;
+						}
+						allPositiveACKRecieved=allACKsReceived(allACKs);
 					} 
 				} catch (SocketTimeoutException e) { 
 					//if timeout resent packet and print details
@@ -349,6 +366,18 @@ public class MulticastServer{
 		} 
 		return positiveACKRecieved; 
 	} 
+	/**
+	 * a methode to count if an ack from all subsrcibed clients has being received
+	 */
+	public boolean allACKsReceived(DatagramPacket[] ACKs){
+		boolean allReceived=true;
+		for(int i=0; i<ACKs.length; i++){
+			if(ACKs[i]==null){
+				allReceived=false;
+			}
+		}
+		return allReceived;
+	}
 
 /*a method to send first package containing server info*/
 	public void sendDetails(int seqNo, int maxSeqNo){

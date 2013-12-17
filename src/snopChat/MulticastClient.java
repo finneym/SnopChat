@@ -143,7 +143,7 @@ public class MulticastClient extends Thread{
 				String msg = new String(data, 1, packet.getLength()-1);
 
 				//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
-				if(!msg.substring(0, 4).equals("ello")){
+				if(!msg.contains("ello")){
 					if(msg.length()>=7 && msg.substring(0, 7).equals("details")){
 						int index = this.isInReceiveDetails(packet);
 						if(index==-1){

@@ -48,11 +48,15 @@ public class DisplayImage extends Thread{
 		public ImageComponent(){
 			try{
 				File image2 = new File(mImageName);
+				//wait(1000);
 				image = ImageIO.read(image2);
 
 			}
 			catch (IOException e){
 				e.printStackTrace();
+//			} catch (InterruptedException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
 			}
 		}
 		public void paintComponent (Graphics g){

@@ -91,7 +91,7 @@ public class Node {
 			File file = null;
 			test.introduce();
 			test.send();
-			//test2.introduce();
+			test2.introduce();
 			test2.send();		
 	}
 }

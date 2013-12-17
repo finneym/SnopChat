@@ -112,14 +112,17 @@ public class Buffer {
 		int lengthCopy =(packet.getLength()-2);
 		System.arraycopy(data, 2, mBuffer, mCounter, lengthCopy);
 	}
-	public void checkFin(){
+	public boolean checkFin(){
 		if(!(this.mCounter<mSize)){
 			this.mFin=true;
-			fin();
+			if(fin()){
+				return true;
+			}	
 		}
+		return false;
 	}
 
-	private void fin(){
+	private boolean fin(){
 		try {
 			file= new File(fileName);				// Create file and write buffer into file
 			fout= new FileOutputStream(file);
@@ -133,7 +136,7 @@ public class Buffer {
 				Thread.sleep(10000);
 				imageDisplay.off();
 				file.delete();
-				
+				return true;
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -141,6 +144,7 @@ public class Buffer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return false;
 	}
 
 }

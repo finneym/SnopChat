@@ -222,7 +222,9 @@ public class MulticastClient extends Thread{
 								receivingFrom.get(bufferCount).copyIn(packet, data); 
 								receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-2)) ; 
 								receivingFrom.get(bufferCount).moveOnSeqNum(); 
-								receivingFrom.get(bufferCount).checkFin(); 
+								if(receivingFrom.get(bufferCount).checkFin()){
+									sendDeletedACK(idNum);
+								}
 							} 
 							sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
 						}
@@ -282,6 +284,19 @@ public class MulticastClient extends Thread{
 
 	} 
 
+	public void sendDeletedACK(int id){
+		int detailIndex;
+		for(detailIndex=0; detailIndex<this.receivingFrom.size(); detailIndex++){
+			if(this.receivingFrom.get(detailIndex).getNodeId()==id){
+				break;
+			}
+		}
+		if(detailIndex==this.receivingFrom.size()-1 && id != this.receivingFrom.get(detailIndex).getNodeId()){
+			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
+			System.exit(-1);
+		}
+		String deletedACK = "deleted/";
+	}
 	/*public Runnable receiveMessage(){
 		byte[] buffer = new byte[MAX_BUFFER];
 		DatagramPacket packet = new DatagramPacket(buffer,	buffer.length, address, port);

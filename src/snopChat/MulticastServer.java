@@ -123,7 +123,8 @@ public class MulticastServer{
 			while(true){
 				try {
 					multiSocket.send(packet);
-					terminal.println("Sent - "+msg);
+					//terminal.println("Sent - "+msg);
+					System.out.println("Sent - "+msg); //just so we can see the actually image stuff in the terminal
 	
 				} catch (IOException e) {
 					e.printStackTrace();

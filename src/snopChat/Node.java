@@ -53,8 +53,8 @@ public class Node {
 //			new Thread(mServer.sendStuff).start();
 //			
 //		}
-		Thread client = new Thread(mClient.receiveMessage());
-		client.start();
+//		Thread client = new Thread(mClient.receiveMessage());
+//		client.start();
 	}
 	
 	public void send(){
@@ -91,7 +91,7 @@ public class Node {
 			File file = null;
 			test.introduce();
 			test.send();
-			test2.introduce();
+			//test2.introduce();
 			test2.send();		
 	}
 }

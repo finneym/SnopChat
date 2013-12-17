@@ -18,6 +18,7 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 //import java.util.Date;
 
+
 import tcdIO.*;
 /**
  * Server 
@@ -116,6 +117,9 @@ public class MulticastServer{
 		}
 	}
 	
+	synchronized void sleep() {
+		try {this.wait(1000);}catch(Exception e){e.printStackTrace();}
+	}
 
 /*method that sends out a hello message to everyone subscribed to the multicast address*/
 	public Runnable sendHello() throws InterruptedException{
@@ -123,10 +127,10 @@ public class MulticastServer{
 			DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(), address, port);
 			while(true){
 				try {
-					wait(1000); //think constant sending was makeing program slow... maybe
 					multiSocket.send(packet);
 					//terminal.println("Sent - "+msg);
 					System.out.println("Sent - "+msg); //just so we can see the actually image stuff in the terminal
+					sleep(); //think constant sending was makeing program slow... maybe
 	
 				} catch (IOException e) {
 					e.printStackTrace();

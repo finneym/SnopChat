@@ -64,7 +64,8 @@ public class MulticastClient extends Thread{
 			multiSocket = new MulticastSocket(port);
 			dataSocket =new DatagramSocket(dataPort);
 			multiSocket.joinGroup(address);
-			terminal.setTitle("Client   Port - " + this.port + "  Address - " + address.toString());
+			//terminal.setTitle("Client   Port - " + this.port + "  Address - " + address.toString());
+			terminal.setTitle("Client " + id);
 			//socket.setLoopbackMode(true);
 		}
 		catch(Exception e) {

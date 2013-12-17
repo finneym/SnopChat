@@ -75,7 +75,8 @@ public class MulticastServer{
 			multiSocket = new MulticastSocket(port);
 			dataSocket =new DatagramSocket(dataPort);
 			multiSocket.joinGroup(address);
-			terminal.setTitle("Server  Port - " + this.port + "  Address - " + address.toString());
+			//terminal.setTitle("Server  Port - " + this.port + "  Address - " + address.toString());
+			terminal.setTitle("Server" + id);
 			//socket.setLoopbackMode(true);
 		
 			terminal.setLocation(400, 0);

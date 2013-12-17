@@ -131,7 +131,7 @@ public class MulticastServer{
 			try {
 				multiSocket.send(packet);
 				//terminal.println("Sent - "+msg);
-				System.out.println("Sent - "+msg); //just so we can see the actually image stuff in the terminal
+				//System.out.println("Sent - "+msg); //just so we can see the actually image stuff in the terminal
 				sleep(); //think constant sending was makeing program slow... maybe
 
 			} catch (IOException e) {
@@ -150,7 +150,7 @@ public class MulticastServer{
 		while(true){
 			multiSocket.receive(packet);//receive packet 
 			String msg = new String(data, 0, packet.getLength());
-			System.out.println("the length is "+ msg);
+			//System.out.println("the length is "+ msg);
 			/*check if the received packet is a 'hello' packet*/
 			//if(msg.substring(0, 5).equals("hello")){				
 			if(msg.contains("hello")){ // was gettting string index out of bounds exception so swaped to this to see if made a difference (think it did)
@@ -323,56 +323,56 @@ public class MulticastServer{
 			e.printStackTrace(); 
 		}        
 	}
-
-	public void receiveDeleted(){				//a copy of receiveACK
+	
+// method to receive the deleted ACKs.
+	public void receiveDeleted() throws IOException{
 		byte[] deleted = new byte[7];
-		DatagramPacket delPack = new DatagramPacket(deleted, deleted.length);
+		DatagramPacket delPack=new DatagramPacket(deleted, deleted.length);
+		
 		String expectedMsg = "deleted";
 		String notReceivedMsg = "notDeleted/"+this.mID;
 		DatagramPacket notReceived = new DatagramPacket(notReceivedMsg.getBytes(), notReceivedMsg.length(), address, port);
-		boolean isDel = false;
+		
 		DatagramPacket[] allDel = new DatagramPacket[subscrNodes.size()];
+		
 		boolean receivedBefore;
 		boolean allDelRecieved=false;
 
-		try { 
-			while(!allDelRecieved) { //while a positive ack is not received
-				try { 
-					do{
-						delPack = new DatagramPacket(deleted, deleted.length);
-						dataSocket.setSoTimeout(100); //set time out time
-						dataSocket.receive(delPack); //receive packer
-					}while(!delPack.getAddress().equals(InetAddress.getLocalHost()));		//loops until the received item is not from the local host
-					isDel = expectedMsg.equals(delPack.getData());// if ack number received is equal to the number sent +1 (0 if number sent was max number) 
-					if(isDel){ //if it was the right ack 
-						receivedBefore=false;;
-						int i;
-						for(i=0; i<allDel.length && allDel[i]!=null; i++){
-							if(allDel[i].equals(delPack)){
-								receivedBefore=true;
-								break;
+		do{
+			try { 
+					dataSocket.setSoTimeout(1000); //set time out time
+					while(true){
+						dataSocket.receive(delPack); //receive packet
+						deleted=delPack.getData();
+						String msg=new String(deleted, 0, delPack.getLength());
+
+						if(expectedMsg.equals(msg)){
+							receivedBefore=false;
+							int i;
+							for(i=0; i<allDel.length && allDel[i]!=null; i++){
+								System.out.println("what value:"+allDel[i].equals(delPack));
+								if(allDel[i].equals(delPack)){
+									receivedBefore=true;
+									break;
+								}
 							}
+							/*throws array out of bounds exception*/
+							//terminal.println("Deletion ACK: " + allDel[i] +" received "+i);
+							if(!receivedBefore && i<allDel.length){
+								allDel[i]=delPack;
+							}
+							allDelRecieved=allACKsReceived(allDel);
 						}
-						terminal.println("ACK: " + allDel[0] +" recieved "+i);
-						if(!receivedBefore && i<allDel.length){
-							allDel[i]=delPack;
-						}
-						allDelRecieved=allACKsReceived(allDel);
-					} 
+					}
 				} catch (SocketTimeoutException e) { 
 					//if timeout resent packet and print details
 					terminal.println("Timed out: Still waiting for Deletions " + "port " + multiSocket.getLocalPort()); 
 					multiSocket.send(notReceived); 
 					terminal.println("Asked for Deletion ACKs"+" port " +multiSocket.getLocalPort()); 
-				} 
-			} 
-
-		}  
-		catch (IOException e) { 
-			e.printStackTrace(); 
+					} 
+			}while(!allDelRecieved);
 		} 
 
-	} 
 
 	/**
 	 * @param sequence number of packet just sent

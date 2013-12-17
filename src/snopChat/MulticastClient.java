@@ -12,6 +12,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 
 import tcdIO.*;
@@ -221,59 +222,85 @@ public class MulticastClient extends Thread{
 
 								receivingFrom.get(bufferCount).copyIn(packet, data); 
 								receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-2)) ; 
-								receivingFrom.get(bufferCount).moveOnSeqNum(); 
+								receivingFrom.get(bufferCount).moveOnSeqNum();
+								
+								sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
+								
 								if(receivingFrom.get(bufferCount).checkFin()){
 									sendDeletedACK(idNum);
+									while(!deletionWarnReceived()){
+									sendDeletedACK(idNum);}
 								}
 							} 
-							sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
 						}
 					}
 				}
-				else if(msg.contains("notDeleted")){			//this is the message from the server 
-					int index = this.isInReceiveDetails(packet);	//finds which receiving from
-					this.receivingFrom.get(index).deletefile();		//attempted to delete the file
-					this.sendDeletedACK(Integer.parseInt(msg.split("/")[1]));		//sends delete ACK
-				}
+//				else if(msg.contains("notDeleted")){			//this is the message from the server 
+//					int index = this.isInReceiveDetails(packet);	//finds which receiving from
+//					this.receivingFrom.get(index).deletefile();		//attempted to delete the file
+//					this.sendDeletedACK(Integer.parseInt(msg.split("/")[1]));		//sends delete ACK
+//				}
 			} 
 
 			catch(java.lang.Exception e) { 
 				e.printStackTrace(); 
 			}    
 			allFin=true; 
-			for(int i=0; i<receivingFrom.size() && receivingFrom.get(i)!=null; i++){ 
-				if(!receivingFrom.get(i).getFin() || !this.receivingFrom.get(i).isDeleted()){ 
-					allFin=false; 
-				} 
-			} 
-			/*fix to stop program finishing after recieving hello... not nicest but works
+			
+			/*fix to stop program finishing after receiving hello... not nicest but works
 			 reason it was jumping was because no buffers were created in the array list so 
 			 all fin was true and the loop ended*/
 			if(receivingFrom.size()==0){
 				allFin=false;
 			}
-			if(allFin == true){
-				boolean finished = false;
-				try {
-					Thread.currentThread().wait(1000);
-					this.multiSocket.setTimeToLive(1000);
-				} catch (IOException e) {
-					finished = true;
-					terminal.println("Program completed");
 
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if(!finished){
-					allFin = false;
+			else{
+				for(int i=0; i<receivingFrom.size() && receivingFrom.get(i)!=null; i++){ 
+					if(!receivingFrom.get(i).getFin() || !this.receivingFrom.get(i).isDeleted()){ 
+						allFin=false; 
+					} 
 				}
 			}
+			/** for now*/
+			if(allFin==true) terminal.println("Program finished.");
+			/** was throwing IllegalMonitorStateException, program seems to work the same without it **/
+//			if(allFin == true){
+//				boolean finished = false;
+//				try {
+//					Thread.currentThread().wait(1000);
+//					this.multiSocket.setTimeToLive(1000);
+//				} catch (IOException e) {
+//					finished = true;
+//					terminal.println("Program completed");
+//
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//				if(!finished){
+//					allFin = false;
+//				}
+//			}
 		} 
-
-
 	}
 
+ // method to wait for any 'not deleted' warnings.
+	public boolean deletionWarnReceived() throws IOException{
+		try{
+			byte[] data= new byte[16];  // receive first packet with size of image as payload 
+			DatagramPacket packet= new DatagramPacket(data, data.length); 
+			dataSocket.setSoTimeout(1000);
+			while(true){
+				dataSocket.receive(packet);
+				String msg = new String(data, 0, packet.getLength()-1);
+				if(msg.contains("notDeleted")){
+					return false;
+				}
+			}
+		} catch (SocketTimeoutException e) { 
+			return true;
+		} 
+	}
 	/**
 	 * sends an ack to the port that it got the packet from 
 	 * will send the number of the next packet it expects to get
@@ -325,9 +352,9 @@ public class MulticastClient extends Thread{
 			terminal.println("Send Deletion");
 		} catch (SocketException e) { 
 			e.printStackTrace(); 
-		} catch (IOException e) { 
-			e.printStackTrace(); 
-		} 
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	/*public Runnable receiveMessage(){
 		byte[] buffer = new byte[MAX_BUFFER];

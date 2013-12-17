@@ -102,7 +102,7 @@ public class Node {
 		Node test = new Node(true ,1, 50002, 50003, MCAST_PORT1); // true if sending image, nodeID, clientPort, serverPort, mcastPort for node
 		Node test2 = new Node(true, 2, 50004, 50005, MCAST_PORT1);
 		Node test3 = new Node(false, 3, 50006, 50007, MCAST_PORT1);
-		File file = null;
+		//File file = null;
 		test.inputFile("banana.jpg");
 		test.introduce();
 		test.send()	;

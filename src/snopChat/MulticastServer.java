@@ -46,7 +46,7 @@ public class MulticastServer{
 	Terminal terminal = new Terminal();
 	int port;
 	int mID;
-
+	private String fileName;
 	static final String FILENAME = "input.jpg";
 	static final int HELLO_SIZE=7;
 
@@ -83,7 +83,7 @@ public class MulticastServer{
 			terminal.setLocation(400, 0);
 			
 			subscrNodes= new ArrayList();
-			
+			fileName = FILENAME;
 			/*used threads*/
 			sendHello=new Runnable(){
 				public void run(){
@@ -107,7 +107,7 @@ public class MulticastServer{
 			
 			sendStuff=new Runnable(){
 				public void run(){
-					MulticastServer.this.sendThings(FILENAME);
+					MulticastServer.this.sendThings();
 				}
 			};
 		}
@@ -243,12 +243,15 @@ public class MulticastServer{
 	//	sendThings(FILENAME);
 	//}
 
+	public void setFileName(String name){
+		fileName=name;
+	}
 	/**
 	 * from working version of stop and wait
 	 * will send a file in packets and wait for the correct ACK before sending the next packet
 	 * @param name of file to send
 	 */
-	private void sendThings(String filename){
+	private void sendThings(){
 		byte[] data= null; //origional array to read image into
 		byte[] data2= null; //array to copy origional array into to add sequence number to the begining
 		DatagramPacket packet= null; 
@@ -262,9 +265,9 @@ public class MulticastServer{
 		byte maxSeqNo = MAX_SEQ; 
 
 		try {    
-			
+			Thread.sleep(2500);
 			//reading in the file
-			file= new File(FILENAME);               // Reserve buffer for length of file and read file 
+			file= new File(fileName);               // Reserve buffer for length of file and read file 
 			buffer= new byte[(int) file.length()]; 
 			fin= new FileInputStream(file); 
 			size= fin.read(buffer); 

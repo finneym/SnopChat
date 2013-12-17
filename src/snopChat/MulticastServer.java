@@ -16,6 +16,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Timer;
 //import java.util.Date;
 
 
@@ -32,14 +33,14 @@ public class MulticastServer{
 	public static final int DEFAULT_ID = -1;
 	public static final int MAX_BUFFER = 1024; 				// Maximum size for data in a packet
 	public static final int MAX_SEQ = 126;
-	
+
 	static ArrayList<Integer> subscrNodes;
-	
+
 	/*used threads*/
 	public Runnable sendHello;
 	public Runnable getHello;
 	public Runnable sendStuff;
-	
+
 	MulticastSocket multiSocket;
 	DatagramSocket dataSocket;
 	InetAddress address;
@@ -47,17 +48,18 @@ public class MulticastServer{
 	int port;
 	int mID;
 	private String fileName;
+	private Timer watch;
 	static final String FILENAME = "input.jpg";
 	static final int HELLO_SIZE=7;
 
-//	/**
-//	 * Default Constructor
-//	 * 
-//	 * Fills an instance with the hardcoded values
-//	 */
-////	public MulticastServer() {
-////		this(MCAST_ADDR, MCAST_PORT, DATA_PORT, DEFAULT_ID);
-////	}
+	//	/**
+	//	 * Default Constructor
+	//	 * 
+	//	 * Fills an instance with the hardcoded values
+	//	 */
+	////	public MulticastServer() {
+	////		this(MCAST_ADDR, MCAST_PORT, DATA_PORT, DEFAULT_ID);
+	////	}
 
 	/**
 	 * Constructor
@@ -79,22 +81,22 @@ public class MulticastServer{
 			//terminal.setTitle("Server  Port - " + this.port + "  Address - " + address.toString());
 			terminal.setTitle("Server" + id);
 			//socket.setLoopbackMode(true);
-		
+
 			terminal.setLocation(400, 0);
-			
+
 			subscrNodes= new ArrayList();
 			fileName = FILENAME;
 			/*used threads*/
 			sendHello=new Runnable(){
 				public void run(){
-						try {
-							MulticastServer.this.sendHello();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+					try {
+						MulticastServer.this.sendHello();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
 			};
-			
+
 			getHello=new Runnable(){
 				public void run(){
 					try{
@@ -104,7 +106,7 @@ public class MulticastServer{
 					}
 				}
 			};	
-			
+
 			sendStuff=new Runnable(){
 				public void run(){
 					MulticastServer.this.sendThings();
@@ -116,30 +118,30 @@ public class MulticastServer{
 			System.exit(-1);
 		}
 	}
-	
+
 	synchronized void sleep() {
 		try {this.wait(1000);}catch(Exception e){e.printStackTrace();}
 	}
 
-/*method that sends out a hello message to everyone subscribed to the multicast address*/
+	/*method that sends out a hello message to everyone subscribed to the multicast address*/
 	public Runnable sendHello() throws InterruptedException{
-			String msg="hello/" + mID + "/"; // sends 'hello' and node ID
-			DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(), address, port);
-			while(true){
-				try {
-					multiSocket.send(packet);
-					//terminal.println("Sent - "+msg);
-					System.out.println("Sent - "+msg); //just so we can see the actually image stuff in the terminal
-					sleep(); //think constant sending was makeing program slow... maybe
-	
-				} catch (IOException e) {
-					e.printStackTrace();
-					System.exit(-1);
-				}
-			}	
-		}
-		
-/*method to receive hello messages from everyone subscribed to the multicast address*/
+		String msg="hello/" + mID + "/"; // sends 'hello' and node ID
+		DatagramPacket packet = new DatagramPacket(msg.getBytes(),msg.length(), address, port);
+		while(true){
+			try {
+				multiSocket.send(packet);
+				//terminal.println("Sent - "+msg);
+				System.out.println("Sent - "+msg); //just so we can see the actually image stuff in the terminal
+				sleep(); //think constant sending was makeing program slow... maybe
+
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+		}	
+	}
+
+	/*method to receive hello messages from everyone subscribed to the multicast address*/
 	public Runnable receiveHello() throws IOException{
 		byte[] data; 
 		DatagramPacket packet;
@@ -152,26 +154,26 @@ public class MulticastServer{
 			/*check if the received packet is a 'hello' packet*/
 			//if(msg.substring(0, 5).equals("hello")){				
 			if(msg.contains("hello")){ // was gettting string index out of bounds exception so swaped to this to see if made a difference (think it did)
-					String[] info =msg.split("/");
-					int nodeID=Integer.parseInt(info[1]);
-					/*check if a new node*/
-					if(!isIDsbscr(nodeID)&& mID!=nodeID){
-						subscrNodes.add(nodeID);
-					}
+				String[] info =msg.split("/");
+				int nodeID=Integer.parseInt(info[1]);
+				/*check if a new node*/
+				if(!isIDsbscr(nodeID)&& mID!=nodeID){
+					subscrNodes.add(nodeID);
 				}
+			}
 		}
 	}
-	
+
 	/*method to check for an ID in the subscribedNodes array*/
 	public static boolean isIDsbscr(int id){
-			if(subscrNodes.size()!=0){
+		if(subscrNodes.size()!=0){
 			for(int i=0;i<subscrNodes.size();i++){
 				if(subscrNodes.get(i)==id) return true;
 			}
 		}
 		return false;
 	}
-		
+
 
 	/**
 	 * Run method
@@ -181,7 +183,7 @@ public class MulticastServer{
 	 * if a client sends a message that contains the string "Date?". 
 	 */
 	//public void run() {
-		/*		//terminal.println("Testing");
+	/*		//terminal.println("Testing");
 		DatagramPacket packet= null;
 		byte[] buffer= null;
 		String msg= null;
@@ -238,8 +240,8 @@ public class MulticastServer{
 		} catch(Exception e) {
 			e.printStackTrace();
 		}*/
-		
-		
+
+
 	//	sendThings(FILENAME);
 	//}
 
@@ -275,10 +277,10 @@ public class MulticastServer{
 			terminal.println("File size: " + buffer.length + ", read: " + size); 
 
 			seqNo =0; //set sequence number to equal 0 to begin (if changeing remember to change expected seq number in the buffer class
-			
+
 			sendDetails(seqNo, maxSeqNo);	
 			seqNo++;
-			
+
 			data= (Integer.toString(size)).getBytes();  // 1st packet contains the length only 
 			data2 = new byte[data.length +2]; //create a new data array of length one greater than the origional
 			data2[0] = seqNo; // add a sequence number to the first byte of this new array
@@ -312,7 +314,8 @@ public class MulticastServer{
 				counter+= (data.length-2); //add the length of the packet sent (not counting the sequence number) to the counter
 
 			} while (counter<size); // while not all image sent
-
+			Thread.sleep(10500);
+			receiveDeleted();
 
 			terminal.println("\nSend complete"+" port " +multiSocket.getLocalPort()); 
 		} 
@@ -320,6 +323,56 @@ public class MulticastServer{
 			e.printStackTrace(); 
 		}        
 	}
+
+	public void receiveDeleted(){				//a copy of receiveACK
+		byte[] deleted = new byte[7];
+		DatagramPacket delPack = new DatagramPacket(deleted, deleted.length);
+		String expectedMsg = "deleted";
+		String notReceivedMsg = "notDeleted/"+this.mID;
+		DatagramPacket notReceived = new DatagramPacket(notReceivedMsg.getBytes(), notReceivedMsg.length(), address, port);
+		boolean isDel = false;
+		DatagramPacket[] allDel = new DatagramPacket[subscrNodes.size()];
+		boolean receivedBefore;
+		boolean allDelRecieved=false;
+
+		try { 
+			while(!allDelRecieved) { //while a positive ack is not received
+				try { 
+					do{
+						delPack = new DatagramPacket(deleted, deleted.length);
+						dataSocket.setSoTimeout(100); //set time out time
+						dataSocket.receive(delPack); //receive packer
+					}while(!delPack.getAddress().equals(InetAddress.getLocalHost()));		//loops until the received item is not from the local host
+					isDel = expectedMsg.equals(delPack.getData());// if ack number received is equal to the number sent +1 (0 if number sent was max number) 
+					if(isDel){ //if it was the right ack 
+						receivedBefore=false;;
+						int i;
+						for(i=0; i<allDel.length && allDel[i]!=null; i++){
+							if(allDel[i].equals(delPack)){
+								receivedBefore=true;
+								break;
+							}
+						}
+						terminal.println("ACK: " + allDel[0] +" recieved "+i);
+						if(!receivedBefore && i<allDel.length){
+							allDel[i]=delPack;
+						}
+						allDelRecieved=allACKsReceived(allDel);
+					} 
+				} catch (SocketTimeoutException e) { 
+					//if timeout resent packet and print details
+					terminal.println("Timed out: Still waiting for Deletions " + "port " + multiSocket.getLocalPort()); 
+					multiSocket.send(notReceived); 
+					terminal.println("Asked for Deletion ACKs"+" port " +multiSocket.getLocalPort()); 
+				} 
+			} 
+
+		}  
+		catch (IOException e) { 
+			e.printStackTrace(); 
+		} 
+
+	} 
 
 	/**
 	 * @param sequence number of packet just sent
@@ -340,9 +393,9 @@ public class MulticastServer{
 			while(!allPositiveACKRecieved) { //while a positive ack is not received
 				try { 
 					do{
-					ACKpacket = new DatagramPacket(ACK, ACK.length);
-					dataSocket.setSoTimeout(100); //set time out time
-					dataSocket.receive(ACKpacket); //receive packer
+						ACKpacket = new DatagramPacket(ACK, ACK.length);
+						dataSocket.setSoTimeout(100); //set time out time
+						dataSocket.receive(ACKpacket); //receive packer
 					}while(!ACKpacket.getAddress().equals(InetAddress.getLocalHost()));		//loops until the received item is not from the local host
 					positiveACKRecieved = (ACK[0]== (ACKNum==maxSeqNum? 0:ACKNum+1));// if ack number received is equal to the number sent +1 (0 if number sent was max number) 
 					if(positiveACKRecieved){ //if it was the right ack 
@@ -387,10 +440,10 @@ public class MulticastServer{
 		return allReceived;
 	}
 
-/*a method to send first package containing server info*/
+	/*a method to send first package containing server info*/
 	public void sendDetails(int seqNo, int maxSeqNo){
 		//details address port id
-		
+
 		try {
 			String detailsToSend = "details/"+"/"+this.dataSocket.getLocalPort()+"/"+mID+"/";
 			byte[] data = new byte[detailsToSend.length()+1];

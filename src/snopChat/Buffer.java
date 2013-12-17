@@ -23,6 +23,7 @@ public class Buffer {
 	private int mServerPort;
 	//private int mNodeId;
 	private InetAddress mAddress;
+	private boolean fileDeleted = false;
 
 	Buffer( int node, int ServerPort, InetAddress address, int clientID){
 		this.mServerPort=ServerPort;
@@ -33,13 +34,13 @@ public class Buffer {
 		mFin=false;
 		fileName = "output-Server-"+node+"-Client-"+clientID+".jpg";
 		mSize=0;
-		
+
 	}
-	
+
 	public InetAddress getmAddressInet(){
-			return mAddress;
+		return mAddress;
 	}
-	
+
 
 	/**
 	 * @return the mClientPort
@@ -74,7 +75,7 @@ public class Buffer {
 	public boolean checkID(int id){
 		return id==mID;
 	}
-	
+
 	public void moveOnSeqNum(){
 		if(mExpSeqNo == MAX_SEQ_NUM){
 			mExpSeqNo = 0;
@@ -100,7 +101,7 @@ public class Buffer {
 	public int getLength(){
 		return mBuffer.length;
 	}
-	
+
 	public void counterIncrease(int toIncreaseBy){
 		this.mCounter+=toIncreaseBy;
 	}
@@ -115,14 +116,21 @@ public class Buffer {
 	public boolean checkFin(){
 		if(!(this.mCounter<mSize)){
 			this.mFin=true;
-			if(fin()){
-				return true;
-			}	
+			new Thread(fin()).start();
+			return true;
 		}
 		return false;
 	}
 
-	private boolean fin(){
+	public boolean isDeleted(){
+		return fileDeleted;
+	}
+	public void deletefile(){
+		if(file != null && file.exists()){
+			file.delete();
+		}
+	}
+	private Runnable fin(){
 		try {
 			file= new File(fileName);				// Create file and write buffer into file
 			fout= new FileOutputStream(file);
@@ -131,12 +139,14 @@ public class Buffer {
 			fout.close();
 			DisplayImage imageDisplay = new DisplayImage(fileName); 
 			imageDisplay.start();
-			
+
 			try {
 				Thread.sleep(10000);
 				imageDisplay.off();
-				file.delete();
-				return true;
+				if(file.delete()){
+					this.fileDeleted = true;
+				}
+				return null;
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -144,7 +154,7 @@ public class Buffer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return false;
+		return null;
 	}
 
 }

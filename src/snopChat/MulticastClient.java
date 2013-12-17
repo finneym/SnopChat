@@ -144,7 +144,7 @@ public class MulticastClient extends Thread{
 				String msg = new String(data, 1, packet.getLength()-1);
 
 				//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
-				if(!msg.contains("ello")){
+				if(!msg.contains("ello") && !msg.contains("elete")){
 					if(msg.length()>=7 && msg.substring(0, 7).equals("details")){
 						int index = this.isInReceiveDetails(packet);
 						if(index==-1){
@@ -229,7 +229,12 @@ public class MulticastClient extends Thread{
 							sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
 						}
 					}
-				} 
+				}
+				else if(msg.contains("notDeleted")){			//this is the message from the server 
+					int index = this.isInReceiveDetails(packet);	//finds which receiving from
+					this.receivingFrom.get(index).deletefile();		//attempted to delete the file
+					this.sendDeletedACK(Integer.parseInt(msg.split("/")[1]));		//sends delete ACK
+				}
 			} 
 
 			catch(java.lang.Exception e) { 
@@ -237,7 +242,7 @@ public class MulticastClient extends Thread{
 			}    
 			allFin=true; 
 			for(int i=0; i<receivingFrom.size() && receivingFrom.get(i)!=null; i++){ 
-				if(!receivingFrom.get(i).getFin()){ 
+				if(!receivingFrom.get(i).getFin() || !this.receivingFrom.get(i).isDeleted()){ 
 					allFin=false; 
 				} 
 			} 
@@ -247,8 +252,26 @@ public class MulticastClient extends Thread{
 			if(receivingFrom.size()==0){
 				allFin=false;
 			}
+			if(allFin == true){
+				boolean finished = false;
+				try {
+					Thread.currentThread().wait(1000);
+					this.multiSocket.setTimeToLive(1000);
+				} catch (IOException e) {
+					finished = true;
+					terminal.println("Program completed");
+
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if(!finished){
+					allFin = false;
+				}
+			}
 		} 
-		terminal.println("Program completed");
+
+
 	}
 
 	/**
@@ -284,7 +307,7 @@ public class MulticastClient extends Thread{
 
 	} 
 
-	public void sendDeletedACK(int id){
+	public void sendDeletedACK(int id){			//a copy of sendACK with a few adjustments
 		int detailIndex;
 		for(detailIndex=0; detailIndex<this.receivingFrom.size(); detailIndex++){
 			if(this.receivingFrom.get(detailIndex).getNodeId()==id){
@@ -295,7 +318,16 @@ public class MulticastClient extends Thread{
 			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			System.exit(-1);
 		}
-		String deletedACK = "deleted/";
+		String deletedACK = "deleted";
+		DatagramPacket delPack = new DatagramPacket(deletedACK.getBytes(), deletedACK.length(), this.receivingFrom.get(detailIndex).getmAddressInet(), this.receivingFrom.get(detailIndex).getServerPort());
+		try { 
+			dataSocket.send(delPack); 
+			terminal.println("Send Deletion");
+		} catch (SocketException e) { 
+			e.printStackTrace(); 
+		} catch (IOException e) { 
+			e.printStackTrace(); 
+		} 
 	}
 	/*public Runnable receiveMessage(){
 		byte[] buffer = new byte[MAX_BUFFER];

@@ -1,8 +1,10 @@
 package snopChat;
 
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 
@@ -51,7 +53,10 @@ public class DisplayImage extends Thread{
 
 			ImageComponent component = new ImageComponent();
 			add(component);
-
+			Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+			double width = screenSize.getWidth();
+			double height = screenSize.getHeight();
+			setLocation((int)width/2-(getWidth()/2), (int)height/2-(getHeight()/2));
 		}
 
 		public static final int DEFAULT_WIDTH = 500;
@@ -81,8 +86,10 @@ public class DisplayImage extends Thread{
 		}
 		public void paintComponent (Graphics g){
 			if(image == null) return;
-
-			g.drawImage(image, 0, 0, this);
+			g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+		}
+		public Image getImage(){
+			return image;
 		}
 	}
 }

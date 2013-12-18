@@ -21,6 +21,17 @@ public class DisplayImage extends Thread{
 		frame = new ImageFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
+		
+		
+		try {
+			Thread.currentThread().sleep(10000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		frame.setVisible(false);
+		File file = new File(this.mImageName);
+		file.delete();
 	}
 
 	public void off(){

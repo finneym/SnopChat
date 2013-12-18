@@ -24,17 +24,17 @@ public class Buffer {
 	//private int mNodeId;
 	private InetAddress mAddress;
 	private boolean fileDeleted = false;
+	
 
-	Buffer( int node, int ServerPort, InetAddress address, int clientID){
+	Buffer( int node, int ServerPort, InetAddress address, int clientID, String format){
 		this.mServerPort=ServerPort;
 		this.mAddress = address;
 		mID =node;
 		mExpSeqNo=0;
 		mCounter=0;
 		mFin=false;
-		fileName = "output-Server-"+node+"-Client-"+clientID+".jpg";
+		fileName = "output-Server-"+node+"-Client-"+clientID+"."+format+"";
 		mSize=0;
-
 	}
 
 	public InetAddress getmAddressInet(){

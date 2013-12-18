@@ -8,7 +8,7 @@ package snopChat;
  */
 import java.io.IOException;
 import java.net.DatagramPacket;
-//import java.net.DatagramSocket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
@@ -38,6 +38,7 @@ public class MulticastClient extends Thread{
 	int port;
 	Terminal terminal = new Terminal();
 	int mID;
+	private String fileFormat;
 	/**
 	 * Default Constructor
 	 * 
@@ -404,7 +405,8 @@ public class MulticastClient extends Thread{
 		for(int i = 0; i<details.length; i++){
 			terminal.println(details[i]);
 		}
-		return new Buffer(Integer.parseInt(details[1]), Integer.parseInt(details[2]), packet.getAddress(), mID);	//details[1] "localhost"
+		
+		return new Buffer(Integer.parseInt(details[1]), Integer.parseInt(details[2]), packet.getAddress(), mID, details[3]);	//details[1] "localhost"
 		//details[2] port
 		//details[3] id
 	}

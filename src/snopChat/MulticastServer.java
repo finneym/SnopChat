@@ -11,7 +11,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
-//import java.net.DatagramSocket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
@@ -450,9 +450,9 @@ public class MulticastServer{
 	/*a method to send first package containing server info*/
 	public void sendDetails(int seqNo, int maxSeqNo){
 		//details address port id
-
+		System.out.println(this.fileName.substring(fileName.length()-3));
 		try {
-			String detailsToSend = "details/"+mID+"/"+this.dataSocket.getLocalPort()+"/";
+			String detailsToSend = "details/"+mID+"/"+this.dataSocket.getLocalPort()+"/"+this.fileName.substring(fileName.length()-3)+"/";
 			byte[] data = new byte[detailsToSend.length()+1];
 			System.arraycopy(detailsToSend.getBytes(), 0, data, 1, detailsToSend.length());
 			data[0] = (byte) seqNo;

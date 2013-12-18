@@ -34,7 +34,7 @@ public class MulticastServer{
 	public static final int MAX_BUFFER = 1024; 				// Maximum size for data in a packet
 	public static final int MAX_SEQ = 126;
 
-	static ArrayList<Integer> subscrNodes;
+	ArrayList<Integer> subscrNodes;
 
 	/*used threads*/
 	public Runnable sendHello;
@@ -157,7 +157,8 @@ public class MulticastServer{
 				String[] info =msg.split("/");
 				int nodeID=Integer.parseInt(info[1]);
 				/*check if a new node*/
-				if(!isIDsbscr(nodeID)&& mID!=nodeID){
+				if(!isIDsbscr(nodeID) && mID!=nodeID){
+					System.out.println("ID - " + nodeID + "    mID " + mID);
 					subscrNodes.add(nodeID);
 				}
 			}
@@ -165,10 +166,12 @@ public class MulticastServer{
 	}
 
 	/*method to check for an ID in the subscribedNodes array*/
-	public static boolean isIDsbscr(int id){
+	public boolean isIDsbscr(int id){
 		if(subscrNodes.size()!=0){
 			for(int i=0;i<subscrNodes.size();i++){
-				if(subscrNodes.get(i)==id) return true;
+				if(subscrNodes.get(i).equals(id)){
+					return true;
+				}
 			}
 		}
 		return false;
@@ -350,7 +353,8 @@ public class MulticastServer{
 							receivedBefore=false;
 							int i;
 							for(i=0; i<allDel.length && allDel[i]!=null; i++){
-								System.out.println("what value:"+allDel[i].equals(delPack));
+	//							System.out.println("what value:"+allDel[i].equals(delPack));
+								terminal.println("what value:"+allDel[i].equals(delPack));
 								if(allDel[i].equals(delPack)){
 									receivedBefore=true;
 									break;
@@ -445,7 +449,7 @@ public class MulticastServer{
 		//details address port id
 
 		try {
-			String detailsToSend = "details/"+"/"+this.dataSocket.getLocalPort()+"/"+mID+"/";
+			String detailsToSend = "details/"+mID+"/"+this.dataSocket.getLocalPort()+"/";
 			byte[] data = new byte[detailsToSend.length()+1];
 			System.arraycopy(detailsToSend.getBytes(), 0, data, 1, detailsToSend.length());
 			data[0] = (byte) seqNo;

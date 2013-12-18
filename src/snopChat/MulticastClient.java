@@ -131,7 +131,7 @@ public class MulticastClient extends Thread{
 		int receivedBefore;
 		boolean allFin; 
 		allFin=false; 
-
+		boolean isNotMe = false;
 
 		terminal.println("Waiting for incoming packets"); 
 		while(!allFin){  
@@ -142,51 +142,71 @@ public class MulticastClient extends Thread{
 
 				//will need to change all this if port is not individual to sender
 				multiSocket.receive(packet);//receive packet
-				String msg = new String(data, 1, packet.getLength()-1);
 
-				//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
-				if(!msg.contains("ello") && !msg.contains("elete")){
-					if(msg.length()>=7 && msg.substring(0, 7).equals("details")){
-						int index = this.isInReceiveDetails(packet);
-						if(index==-1){
-							this.receivingFrom.add(this.receiveDetails(packet));
-							receivingFrom.get(this.receivingFrom.size()-1).moveOnSeqNum(); // move on the expected seq num
-							sendACK((byte)receivingFrom.get(this.receivingFrom.size()-1).getExpSeqNum(), this.receivingFrom.get(this.receivingFrom.size()-1).getNodeId());
+				
+					int tempID = mID;
+					String msg = new String(data, 1, packet.getLength()-1);
+					try{
+					isNotMe = !(data[1]==(byte)mID || Integer.parseInt(msg.split("/")[1])==mID);
+					}catch(java.lang.NumberFormatException e){
+						if( data[1]!=(byte)mID){
+							isNotMe = true;
 						}
-						else{
-							this.sendACK((byte)receivingFrom.get(index).getExpSeqNum(), this.receivingFrom.get(index).getID());
+					}catch(java.lang.ArrayIndexOutOfBoundsException e){
+						try{
+						if( data[1]!=(byte)mID){
+							isNotMe = true;
+						}
+						}catch(java.lang.ArrayIndexOutOfBoundsException q){
+							if(Integer.parseInt(msg.split("/")[1])!=mID){
+								isNotMe = true;
+							}
 						}
 					}
-					else{
-						//terminal.println("Received: " + new String(data, 0, packet.getLength()));
-						idNum = packet.getData()[1]; 
-						int bufferCount=0; 
-						//check if one or more packets have being received from this port before
-						//					while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null && receivedBefore==false){
-						//						int gotid = this.receivingFrom.get(bufferCount).getID();
-						//						int sizeOfList = this.receivingFrom.get(bufferCount).getSize();
-						//						if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()!=0){
-						//							receivedBefore=true;
-						//						}
-						//						else if(!receivedBefore){
-						//							bufferCount+=1;
-						//						}
-						//					}
-						receivedBefore=0; 
-						while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null){
-							if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()!=0){
-								receivedBefore=2;
-								break;
-							}
-							else if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()==0){
-								receivedBefore = 1;
-								break;
+					if(isNotMe){
+					//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
+					if(!msg.contains("ello") && !msg.contains("elete")){
+						if(msg.length()>=7 && msg.substring(0, 7).equals("details")){
+							int index = this.isInReceiveDetails(packet);
+							if(index==-1){
+								this.receivingFrom.add(this.receiveDetails(packet));
+								receivingFrom.get(this.receivingFrom.size()-1).moveOnSeqNum(); // move on the expected seq num
+								sendACK((byte)receivingFrom.get(this.receivingFrom.size()-1).getExpSeqNum(), this.receivingFrom.get(this.receivingFrom.size()-1).getNodeId());
 							}
 							else{
-								bufferCount+=1;
+								this.sendACK((byte)receivingFrom.get(index).getExpSeqNum(), this.receivingFrom.get(index).getID());
 							}
 						}
-						/*while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){ 
+						else{
+							//terminal.println("Received: " + new String(data, 0, packet.getLength()));
+							idNum = packet.getData()[1]; 
+							int bufferCount=0; 
+							//check if one or more packets have being received from this port before
+							//					while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null && receivedBefore==false){
+							//						int gotid = this.receivingFrom.get(bufferCount).getID();
+							//						int sizeOfList = this.receivingFrom.get(bufferCount).getSize();
+							//						if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()!=0){
+							//							receivedBefore=true;
+							//						}
+							//						else if(!receivedBefore){
+							//							bufferCount+=1;
+							//						}
+							//					}
+							receivedBefore=0; 
+							while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null){
+								if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()!=0){
+									receivedBefore=2;
+									break;
+								}
+								else if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()==0){
+									receivedBefore = 1;
+									break;
+								}
+								else{
+									bufferCount+=1;
+								}
+							}
+							/*while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){ 
 						if(buffers[bufferCount]!=null){ 
 							if(buffers[bufferCount].getPortNum() == portNum){ 
 								foundPortNum=true; 
@@ -196,58 +216,58 @@ public class MulticastClient extends Thread{
 							} 
 						} 
 					} */
-						//if no packet has being received before
-						if(receivedBefore == 1){ 
-							//create new instance of buffer
-							//buffers[bufferCount]= new Buffer(packet.getPort()); 
-							seqNo = data[0]; //get seq num
-							data= packet.getData();// reserve buffer to receive image 
-							terminal.println("received seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum()+" "+ packet.getPort());  
-							if(receivingFrom.get(bufferCount).checkSeqNum(seqNo)&&receivingFrom.get(bufferCount).checkID(idNum)){ //check if it really is the first packet
-								size= (Integer.valueOf(new String(data, 2, packet.getLength()-2))).intValue();  //add size
-								terminal.println("Filesize:" + size +" sequence number "+seqNo); 
-								receivingFrom.get(bufferCount).createBuffer(size); 
-								receivingFrom.get(bufferCount).moveOnSeqNum(); // move on the expected seq num
-							}
-							sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); // send an ack for the next packet expected from this port
-						} 
-
-						//otherwise if a packet has being received
-						else if (receivedBefore == 2){ 
-							seqNo = data[0];  
-							terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum() +"  "+ packet.getPort()); 
-							//if this packet is the next packet expected for this port add it to the array
-							if(receivingFrom.get(bufferCount).checkSeqNum(seqNo)&&receivingFrom.get(bufferCount).checkID(idNum)){ //check it is the right packet
-								terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + receivingFrom.get(bufferCount).getCounter() + " - Payload: "+(packet.getLength()-2));    
-
-								receivingFrom.get(bufferCount).copyIn(packet, data); 
-								receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-2)) ; 
-								receivingFrom.get(bufferCount).moveOnSeqNum();
-								
-								sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
-								
-								if(receivingFrom.get(bufferCount).checkFin()){
-									new Thread(receivingFrom.get(bufferCount).fin()).run();
-									sendDeletedACK(idNum);
-									while(!deletionWarnReceived()){
-									sendDeletedACK(idNum);}
+							//if no packet has being received before
+							if(receivedBefore == 1){ 
+								//create new instance of buffer
+								//buffers[bufferCount]= new Buffer(packet.getPort()); 
+								seqNo = data[0]; //get seq num
+								data= packet.getData();// reserve buffer to receive image 
+								terminal.println("received seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum()+" "+ packet.getPort());  
+								if(receivingFrom.get(bufferCount).checkSeqNum(seqNo)&&receivingFrom.get(bufferCount).checkID(idNum)){ //check if it really is the first packet
+									size= (Integer.valueOf(new String(data, 2, packet.getLength()-2))).intValue();  //add size
+									terminal.println("Filesize:" + size +" sequence number "+seqNo); 
+									receivingFrom.get(bufferCount).createBuffer(size); 
+									receivingFrom.get(bufferCount).moveOnSeqNum(); // move on the expected seq num
 								}
+								sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); // send an ack for the next packet expected from this port
 							} 
+
+							//otherwise if a packet has being received
+							else if (receivedBefore == 2){ 
+								seqNo = data[0];  
+								terminal.println("recieved seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum() +"  "+ packet.getPort()); 
+								//if this packet is the next packet expected for this port add it to the array
+								if(receivingFrom.get(bufferCount).checkSeqNum(seqNo)&&receivingFrom.get(bufferCount).checkID(idNum)){ //check it is the right packet
+									terminal.println("Received packet - Port: " + packet.getPort() + " - Counter: " + receivingFrom.get(bufferCount).getCounter() + " - Payload: "+(packet.getLength()-2));    
+
+									receivingFrom.get(bufferCount).copyIn(packet, data); 
+									receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-2)) ; 
+									receivingFrom.get(bufferCount).moveOnSeqNum();
+
+									sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
+
+									if(receivingFrom.get(bufferCount).checkFin()){
+										new Thread(receivingFrom.get(bufferCount).fin()).run();
+										sendDeletedACK(idNum);
+										while(!deletionWarnReceived()){
+											sendDeletedACK(idNum);}
+									}
+								} 
+							}
 						}
 					}
-				}
-//				else if(msg.contains("notDeleted")){			//this is the message from the server 
-//					int index = this.isInReceiveDetails(packet);	//finds which receiving from
-//					this.receivingFrom.get(index).deletefile();		//attempted to delete the file
-//					this.sendDeletedACK(Integer.parseInt(msg.split("/")[1]));		//sends delete ACK
-//				}
-			} 
-
+					//				else if(msg.contains("notDeleted")){			//this is the message from the server 
+					//					int index = this.isInReceiveDetails(packet);	//finds which receiving from
+					//					this.receivingFrom.get(index).deletefile();		//attempted to delete the file
+					//					this.sendDeletedACK(Integer.parseInt(msg.split("/")[1]));		//sends delete ACK
+					//				}
+				} 
+			}
 			catch(java.lang.Exception e) { 
 				e.printStackTrace(); 
 			}    
 			allFin=true; 
-			
+
 			/*fix to stop program finishing after receiving hello... not nicest but works
 			 reason it was jumping was because no buffers were created in the array list so 
 			 all fin was true and the loop ended*/
@@ -265,27 +285,28 @@ public class MulticastClient extends Thread{
 			/** for now*/
 			if(allFin==true) terminal.println("Program finished.");
 			/** was throwing IllegalMonitorStateException, program seems to work the same without it **/
-//			if(allFin == true){
-//				boolean finished = false;
-//				try {
-//					Thread.currentThread().wait(1000);
-//					this.multiSocket.setTimeToLive(1000);
-//				} catch (IOException e) {
-//					finished = true;
-//					terminal.println("Program completed");
-//
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//				if(!finished){
-//					allFin = false;
-//				}
-//			}
+			//			if(allFin == true){
+			//				boolean finished = false;
+			//				try {
+			//					Thread.currentThread().wait(1000);
+			//					this.multiSocket.setTimeToLive(1000);
+			//				} catch (IOException e) {
+			//					finished = true;
+			//					terminal.println("Program completed");
+			//
+			//				} catch (InterruptedException e) {
+			//					// TODO Auto-generated catch block
+			//					e.printStackTrace();
+			//				}
+			//				if(!finished){
+			//					allFin = false;
+			//				}
+			//			}
+
 		} 
 	}
 
- // method to wait for any 'not deleted' warnings.
+	// method to wait for any 'not deleted' warnings.
 	public boolean deletionWarnReceived() throws IOException{
 		try{
 			byte[] data= new byte[16];  // receive first packet with size of image as payload 
@@ -316,7 +337,7 @@ public class MulticastClient extends Thread{
 			}
 		}
 		if(detailIndex==this.receivingFrom.size()-1 && id != this.receivingFrom.get(detailIndex).getNodeId()){
-//			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
+			//			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			terminal.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			System.exit(-1);
 		}
@@ -344,7 +365,7 @@ public class MulticastClient extends Thread{
 			}
 		}
 		if(detailIndex==this.receivingFrom.size()-1 && id != this.receivingFrom.get(detailIndex).getNodeId()){
-//			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
+			//			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			terminal.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			System.exit(-1);
 		}
@@ -381,13 +402,13 @@ public class MulticastClient extends Thread{
 		for(int i = 0; i<details.length; i++){
 			terminal.println(details[i]);
 		}
-		return new Buffer(Integer.parseInt(details[3]), Integer.parseInt(details[2]), packet.getAddress(), mID);	//details[1] "localhost"
+		return new Buffer(Integer.parseInt(details[1]), Integer.parseInt(details[2]), packet.getAddress(), mID);	//details[1] "localhost"
 		//details[2] port
 		//details[3] id
 	}
 	public int isInReceiveDetails(DatagramPacket packet){
 		for(int i = 0; i<this.receivingFrom.size(); i++){
-			if(this.receivingFrom.get(i).getNodeId() == Integer.parseInt(new String(packet.getData()).split("/")[3])){
+			if(this.receivingFrom.get(i).getNodeId() == Integer.parseInt(new String(packet.getData()).split("/")[1])){
 				return i;
 			}
 		}

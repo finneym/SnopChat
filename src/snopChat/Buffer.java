@@ -116,7 +116,6 @@ public class Buffer {
 	public boolean checkFin(){
 		if(!(this.mCounter<mSize)){
 			this.mFin=true;
-			new Thread(fin()).start();
 			return true;
 		}
 		return false;
@@ -130,7 +129,7 @@ public class Buffer {
 			file.delete();
 		}
 	}
-	private Runnable fin(){
+	public Runnable fin(){
 		try {
 			file= new File(fileName);				// Create file and write buffer into file
 			fout= new FileOutputStream(file);
@@ -141,21 +140,21 @@ public class Buffer {
 			imageDisplay.start();
 
 			try {
-				Thread.sleep(10000);
-				imageDisplay.off();
-				if(file.delete()){
-					this.fileDeleted = true;
-				}
-				return null;
+				Thread.currentThread().wait();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			imageDisplay.off();
+			if(file.delete()){
+				this.fileDeleted = true;
+			}
+			return null;
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-
 }
 

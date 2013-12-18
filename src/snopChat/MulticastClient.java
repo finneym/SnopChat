@@ -223,6 +223,7 @@ public class MulticastClient extends Thread{
 								receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-2)) ; 
 								receivingFrom.get(bufferCount).moveOnSeqNum(); 
 								if(receivingFrom.get(bufferCount).checkFin()){
+									new Thread(receivingFrom.get(bufferCount).fin()).run();
 									sendDeletedACK(idNum);
 								}
 							} 

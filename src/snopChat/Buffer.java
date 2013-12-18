@@ -140,17 +140,16 @@ public class Buffer {
 			imageDisplay.start();
 
 			try {
-				Thread.currentThread().wait();
+				Thread.currentThread().wait(10000);
+				imageDisplay.off();
+				if(file.delete()){
+					this.fileDeleted = true;
+				}
+				return null;
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			imageDisplay.off();
-			if(file.delete()){
-				this.fileDeleted = true;
-			}
-			return null;
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

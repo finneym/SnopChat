@@ -67,6 +67,8 @@ public class Node {
 		//		}
 		if(this.fileToSend){
 			new Thread(mServer.sendStuff).start();
+		}else{
+			mServer.getTerminal().setVisible(false);
 		}
 		new Thread(mClient).start();
 	}

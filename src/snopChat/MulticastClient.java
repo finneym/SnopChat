@@ -8,7 +8,7 @@ package snopChat;
  */
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
+//import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
@@ -143,27 +143,27 @@ public class MulticastClient extends Thread{
 				//will need to change all this if port is not individual to sender
 				multiSocket.receive(packet);//receive packet
 
-				
-					int tempID = mID;
-					String msg = new String(data, 1, packet.getLength()-1);
-					try{
+
+				int tempID = mID;
+				String msg = new String(data, 1, packet.getLength()-1);
+				try{
 					isNotMe = !(data[1]==(byte)mID || Integer.parseInt(msg.split("/")[1])==mID);
-					}catch(java.lang.NumberFormatException e){
+				}catch(java.lang.NumberFormatException e){
+					if( data[1]!=(byte)mID){
+						isNotMe = true;
+					}
+				}catch(java.lang.ArrayIndexOutOfBoundsException e){
+					try{
 						if( data[1]!=(byte)mID){
 							isNotMe = true;
 						}
-					}catch(java.lang.ArrayIndexOutOfBoundsException e){
-						try{
-						if( data[1]!=(byte)mID){
+					}catch(java.lang.ArrayIndexOutOfBoundsException q){
+						if(Integer.parseInt(msg.split("/")[1])!=mID){
 							isNotMe = true;
-						}
-						}catch(java.lang.ArrayIndexOutOfBoundsException q){
-							if(Integer.parseInt(msg.split("/")[1])!=mID){
-								isNotMe = true;
-							}
 						}
 					}
-					if(isNotMe){
+				}
+				if(isNotMe){
 					//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
 					if(!msg.contains("ello") && !msg.contains("elete")){
 						if(msg.length()>=7 && msg.substring(0, 7).equals("details")){
@@ -243,16 +243,18 @@ public class MulticastClient extends Thread{
 									receivingFrom.get(bufferCount).copyIn(packet, data); 
 									receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-2)) ; 
 									receivingFrom.get(bufferCount).moveOnSeqNum();
-
-									sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
-
+									
 									if(receivingFrom.get(bufferCount).checkFin()){
 										new Thread(receivingFrom.get(bufferCount).fin()).run();
 										sendDeletedACK(idNum);
 										while(!deletionWarnReceived()){
 											sendDeletedACK(idNum);}
 									}
-								} 
+								}
+									sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
+								
+								
+
 							}
 						}
 					}

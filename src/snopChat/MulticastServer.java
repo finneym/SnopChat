@@ -11,7 +11,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
+//import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
@@ -119,6 +119,9 @@ public class MulticastServer{
 		}
 	}
 
+	public Terminal getTerminal(){
+		return terminal;
+	}
 	synchronized void sleep() {
 		try {this.wait(1000);}catch(Exception e){e.printStackTrace();}
 	}

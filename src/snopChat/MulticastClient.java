@@ -316,7 +316,8 @@ public class MulticastClient extends Thread{
 			}
 		}
 		if(detailIndex==this.receivingFrom.size()-1 && id != this.receivingFrom.get(detailIndex).getNodeId()){
-			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
+//			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
+			terminal.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			System.exit(-1);
 		}
 		byte[] ACK; 
@@ -343,7 +344,8 @@ public class MulticastClient extends Thread{
 			}
 		}
 		if(detailIndex==this.receivingFrom.size()-1 && id != this.receivingFrom.get(detailIndex).getNodeId()){
-			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
+//			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
+			terminal.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			System.exit(-1);
 		}
 		String deletedACK = "deleted";

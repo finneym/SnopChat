@@ -59,8 +59,8 @@ public class DisplayImage extends Thread{
 			setLocation((int)width/2-(getWidth()/2), (int)height/2-(getHeight()/2));
 		}
 
-		public static final int DEFAULT_WIDTH = 50;
-		public static final int DEFAULT_HEIGHT = 50;
+		public static final int DEFAULT_WIDTH = 500;
+		public static final int DEFAULT_HEIGHT = 500;
 	}
 
 

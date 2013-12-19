@@ -25,14 +25,15 @@ public class DisplayImage extends Thread{
 		
 		
 		try {
-			Thread.currentThread();
-			Thread.sleep(10000);
+			Thread.currentThread().sleep(10000);
+			//keep that line yellow!
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		frame.setVisible(false);
 		File file = new File(this.mImageName);
 		file.delete();
+		
 	}
 
 	public void off(){
@@ -58,8 +59,8 @@ public class DisplayImage extends Thread{
 			setLocation((int)width/2-(getWidth()/2), (int)height/2-(getHeight()/2));
 		}
 
-		public static final int DEFAULT_WIDTH = 500;
-		public static final int DEFAULT_HEIGHT = 500;
+		public static final int DEFAULT_WIDTH = 50;
+		public static final int DEFAULT_HEIGHT = 50;
 	}
 
 

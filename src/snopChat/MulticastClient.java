@@ -27,7 +27,8 @@ public class MulticastClient extends Thread{
 	public static final int MCAST_PORT = 9013; // hardcoded port number for the multicast group
 	public static final int DEFAULT_ID = -1;
 	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet  
-
+	public static final int DATA_PORT = 50001;
+	
 
 	ArrayList<Buffer> receivingFrom;	//stores buffers of all the servers that are sending an image
 
@@ -40,6 +41,9 @@ public class MulticastClient extends Thread{
 //	private String fileFormat;
 
 
+	public MulticastClient(){
+		this(MCAST_ADDR, MCAST_PORT, DATA_PORT, DEFAULT_ID);
+	}
 	/**
 	 * Constructor
 	 * 
@@ -187,7 +191,7 @@ public class MulticastClient extends Thread{
 									// if the whole file has been sent, display and send a deletionACK after the file has been deleted
 									if(receivingFrom.get(bufferCount).checkFin()){
 										new Thread(receivingFrom.get(bufferCount).fin()).run();
-										sleep(10000);
+										//sleep(10000);
 										sendDeletedACK(idNum);
 										//wait for a warning from the server if the deletionACK is lost, if warning is received re-send the deletion ACK
 										if(deletionWarnReceived()){
@@ -217,7 +221,9 @@ public class MulticastClient extends Thread{
 				}
 			}
 			
-			if(allFin==true) terminal.println("Program finished.");
+			if(allFin==true){
+				terminal.println("Program finished.");
+			}
 		} 
 	}
 	

@@ -20,10 +20,10 @@ public class Buffer {
 	private int mClientPort;
 	private int mServerPort;
 	private InetAddress mAddress;
-	
+
 	File file;
 	FileOutputStream fout;
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -154,8 +154,9 @@ public class Buffer {
 	 * function to set and return the finishing status
 	 */
 	public boolean checkFin(){
-		if(!(this.mCounter<mSize))
+		if(!(this.mCounter<mSize)){
 			this.mFin=true;
+		}
 		return mFin;
 	}
 	/**

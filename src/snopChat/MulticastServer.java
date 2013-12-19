@@ -298,10 +298,13 @@ public class MulticastServer{
 							//try to match every subscribed node's id to a allDel id; if false keep waiting for deletion ACKs
 							for(i=0;i<subscrNodes.size() && allDelRecieved;i++){			
 								for(int j=0;j<allDel.length&&!matchFound;j++){
-									if(subscrNodes.get(i)==allDel[j])
+									if(subscrNodes.get(i)==allDel[j]){
 										matchFound=true;
+									}
 								}
-								if(!matchFound) allDelRecieved=false;
+								if(!matchFound) {
+									allDelRecieved=false;
+								}
 							}
 						}
 					}
@@ -330,6 +333,7 @@ public class MulticastServer{
 		DatagramPacket ACKpacket; //new packet to receive ack
 		ACKpacket = new DatagramPacket(ACK, ACK.length); 
 		DatagramPacket[] allACKs = new DatagramPacket[subscrNodes.size()];
+	
 		boolean receivedBefore;
 		boolean allPositiveACKRecieved=false;
 
@@ -340,13 +344,15 @@ public class MulticastServer{
 						ACKpacket = new DatagramPacket(ACK, ACK.length);
 						dataSocket.setSoTimeout(100); //set time out time
 						dataSocket.receive(ACKpacket); //receive packer
+						System.out.println("ACKPacket -" + ACK[0] + "  Server Num - " + this.mID);
 					}while(!ACKpacket.getAddress().equals(InetAddress.getLocalHost()));		//loops until the received item is not from the local host
 					positiveACKRecieved = (ACK[0]== (ACKNum==maxSeqNum? 0:ACKNum+1));// if ack number received is equal to the number sent +1 (0 if number sent was max number) 
 					if(positiveACKRecieved){ //if it was the right ack 
 						receivedBefore=false;;
 						int i;
 						for(i=0; i<allACKs.length && allACKs[i]!=null; i++){
-							if(allACKs[i].equals(ACKpacket)){
+							//if(allACKs[i].equals(ACKpacket)){
+							if(allACKs[i].getAddress().equals(ACKpacket.getAddress()) && allACKs[i].getPort()== ACKpacket.getPort()){
 								receivedBefore=true;
 								break;
 							}
@@ -389,7 +395,6 @@ public class MulticastServer{
 	 */
 	public void sendDetails(int seqNo, int maxSeqNo){
 		//details address port id
-		System.out.println(this.fileName.substring(fileName.length()-3));
 		try {
 			String detailsToSend = "details/"+mID+"/"+this.dataSocket.getLocalPort()+"/"+this.fileName.substring(fileName.length()-3)+"/";
 			byte[] data = new byte[detailsToSend.length()+1];

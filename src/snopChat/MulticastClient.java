@@ -243,9 +243,9 @@ public class MulticastClient extends Thread{
 		try{
 			byte[] data= new byte[16]; 
 			DatagramPacket packet= new DatagramPacket(data, data.length); 
-			dataSocket.setSoTimeout(1000);
+			//dataSocket.setSoTimeout(1000);
 			while(true){	//receive packets until timer runs out
-				dataSocket.receive(packet);
+				multiSocket.receive(packet);
 				String msg = new String(data, 0, packet.getLength()-1);
 				if(msg.contains("notDeleted")){
 					return true;

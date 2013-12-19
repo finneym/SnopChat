@@ -25,28 +25,20 @@ public class MulticastClient extends Thread{
 
 	public static final String MCAST_ADDR = "230.0.0.1"; // hardcoded address for the multicast group
 	public static final int MCAST_PORT = 9013; // hardcoded port number for the multicast group
-	public static final int DATA_PORT = 50001;  
 	public static final int DEFAULT_ID = -1;
 	public static final int MAX_BUFFER = 1024; // maximum size for data in a packet  
 
 
-	ArrayList<Buffer> receivingFrom;
+	ArrayList<Buffer> receivingFrom;	//stores buffers of all the servers that are sending an image
 
 	MulticastSocket multiSocket;
 	DatagramSocket dataSocket;
 	InetAddress address;
 	int port;
-	Terminal terminal = new Terminal();
+	Terminal terminal;
 	int mID;
-	private String fileFormat;
-	/**
-	 * Default Constructor
-	 * 
-	 * Fills an instance with the hardcoded values
-	 */
-	public MulticastClient() {
-		this(MCAST_ADDR, MCAST_PORT, DATA_PORT, DEFAULT_ID);
-	}
+//	private String fileFormat;
+
 
 	/**
 	 * Constructor
@@ -54,8 +46,6 @@ public class MulticastClient extends Thread{
 	 * Creates an instance with specific values for the 
 	 * address and port of the multicast group 
 	 * 
-	 * @param addr Address of the multicast group as string
-	 * @param port Port number of the server 
 	 */
 	public MulticastClient(String addr, int port, int dataPort, int id) {
 		try {
@@ -66,9 +56,8 @@ public class MulticastClient extends Thread{
 			multiSocket = new MulticastSocket(port);
 			dataSocket =new DatagramSocket(dataPort);
 			multiSocket.joinGroup(address);
-			//terminal.setTitle("Client   Port - " + this.port + "  Address - " + address.toString());
+			terminal = new Terminal();
 			terminal.setTitle("Client " + id);
-			//socket.setLoopbackMode(true);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -80,40 +69,10 @@ public class MulticastClient extends Thread{
 	/**
 	 * Run method
 	 *
-	 * This method sends a datagram with the strnig "Data?" to a server and
-	 * then enters an endless loop in which it attempts to receive datagrams
-	 * and prints the content of received datagrams.
+	 * is called when a client instance is created,
+	 * receives incoming data packets
 	 */
 	public void run(){
-		/*		String msg = "Date?";
-		byte[] buffer;
-		DatagramPacket packet = null;
-
-		try {
-
-			// send datagram to server - asking for date
-			packet = new DatagramPacket(msg.getBytes(),	msg.length(), address, port);
-			socket.send(packet);
-			//System.out.println("Send Msg");
-			terminal.println("Send Msg");
-			// wait for incoming datagrams and print their content
-			while (true) {
-				//System.out.println("Waiting");
-				terminal.println("Waiting");
-				buffer = new byte[MAX_BUFFER];
-				packet = new DatagramPacket(buffer, buffer.length);
-				socket.receive(packet);
-				buffer= packet.getData();
-				//System.out.println("Received: " + new String(buffer, 0, packet.getLength()));
-				//System.out.println("From: "+packet.getAddress()+":"+packet.getPort());
-				terminal.println("Received: " + new String(buffer, 0, packet.getLength()));
-				terminal.println("From: "+packet.getAddress()+":"+packet.getPort());
-			}
-
-		} catch(Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}*/
 		receiveThing();
 	}
 
@@ -126,12 +85,11 @@ public class MulticastClient extends Thread{
 		DatagramPacket packet; 
 		int size = 0; 
 		byte seqNo;  
-		//Buffer[] buffers; 
 		int idNum; 
-		//buffers = new Buffer[10]; 
+		
 		int receivedBefore;
-		boolean allFin; 
-		allFin=false; 
+		
+		boolean allFin=false; 
 		boolean isNotMe = false;
 
 		terminal.println("Waiting for incoming packets"); 
@@ -141,12 +99,10 @@ public class MulticastClient extends Thread{
 				data= new byte[MAX_BUFFER+2];  // receive first packet with size of image as payload 
 				packet= new DatagramPacket(data, data.length); 
 
-				//will need to change all this if port is not individual to sender
 				multiSocket.receive(packet);//receive packet
-
-
-				int tempID = mID;
-				String msg = new String(data, 1, packet.getLength()-1);
+				
+				//ensures the packet is not from its own server; if so, discards the data
+				String msg = new String(data, 1, packet.getLength()-1);	
 				try{
 					isNotMe = !(data[1]==(byte)mID || Integer.parseInt(msg.split("/")[1])==mID);
 				}catch(java.lang.NumberFormatException e){
@@ -164,9 +120,11 @@ public class MulticastClient extends Thread{
 						}
 					}
 				}
+				
 				if(isNotMe){
-					//temp fix as was receiving ACK's up here... need to work out why and possibly come up with better fix
+					//check if the packet is either a 'hello' or a 'deleted' packet
 					if(!msg.contains("ello") && !msg.contains("elete")){
+						//if the very first packet, use the details to create a buffer to store the data
 						if(msg.length()>=7 && msg.substring(0, 7).equals("details")){
 							int index = this.isInReceiveDetails(packet);
 							if(index==-1){
@@ -175,24 +133,13 @@ public class MulticastClient extends Thread{
 								sendACK((byte)receivingFrom.get(this.receivingFrom.size()-1).getExpSeqNum(), this.receivingFrom.get(this.receivingFrom.size()-1).getNodeId());
 							}
 							else{
-								this.sendACK((byte)receivingFrom.get(index).getExpSeqNum(), this.receivingFrom.get(index).getID());
+								this.sendACK((byte)receivingFrom.get(index).getExpSeqNum(), this.receivingFrom.get(index).getID()); //reply with an ACK
 							}
 						}
 						else{
-							//terminal.println("Received: " + new String(data, 0, packet.getLength()));
 							idNum = packet.getData()[1]; 
 							int bufferCount=0; 
 							//check if one or more packets have being received from this port before
-							//					while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null && receivedBefore==false){
-							//						int gotid = this.receivingFrom.get(bufferCount).getID();
-							//						int sizeOfList = this.receivingFrom.get(bufferCount).getSize();
-							//						if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()!=0){
-							//							receivedBefore=true;
-							//						}
-							//						else if(!receivedBefore){
-							//							bufferCount+=1;
-							//						}
-							//					}
 							receivedBefore=0; 
 							while(bufferCount<receivingFrom.size() && receivingFrom.get(bufferCount)!=null){
 								if(idNum == receivingFrom.get(bufferCount).getID() && receivingFrom.get(bufferCount).getSize()!=0){
@@ -207,20 +154,10 @@ public class MulticastClient extends Thread{
 									bufferCount+=1;
 								}
 							}
-							/*while(bufferCount<buffers.length && foundPortNum ==false && buffers[bufferCount]!=null){ 
-						if(buffers[bufferCount]!=null){ 
-							if(buffers[bufferCount].getPortNum() == portNum){ 
-								foundPortNum=true; 
-							} 
-							else if(!foundPortNum){ 
-								bufferCount++; 
-							} 
-						} 
-					} */
-							//if no packet has being received before
+		
+							//if no packet has been received before
 							if(receivedBefore == 1){ 
 								//create new instance of buffer
-								//buffers[bufferCount]= new Buffer(packet.getPort()); 
 								seqNo = data[0]; //get seq num
 								data= packet.getData();// reserve buffer to receive image 
 								terminal.println("received seqNo "+ seqNo +" expected seqNo "+receivingFrom.get(bufferCount).getExpSeqNum()+" "+ packet.getPort());  
@@ -244,26 +181,22 @@ public class MulticastClient extends Thread{
 									receivingFrom.get(bufferCount).copyIn(packet, data); 
 									receivingFrom.get(bufferCount).counterIncrease((packet.getLength()-2)) ; 
 									receivingFrom.get(bufferCount).moveOnSeqNum();
-									
-									if(receivingFrom.get(bufferCount).checkFin()){
-										new Thread(receivingFrom.get(bufferCount).fin()).run();
-										sendDeletedACK(idNum);
-										while(!deletionWarnReceived()){
-											sendDeletedACK(idNum);}
-									}
 								}
 									sendACK((byte)(receivingFrom.get(bufferCount).getExpSeqNum()), idNum); //send an ack for the next packet expected
 								
-								
-
+									// if the whole file has been sent, display and send a deletionACK after the file has been deleted
+									if(receivingFrom.get(bufferCount).checkFin()){
+										new Thread(receivingFrom.get(bufferCount).fin()).run();
+										sleep(10000);
+										sendDeletedACK(idNum);
+										//wait for a warning from the server if the deletionACK is lost, if warning is received re-send the deletion ACK
+										if(deletionWarnReceived()){
+											sendDeletedACK(idNum);
+										}
+									}
 							}
 						}
 					}
-					//				else if(msg.contains("notDeleted")){			//this is the message from the server 
-					//					int index = this.isInReceiveDetails(packet);	//finds which receiving from
-					//					this.receivingFrom.get(index).deletefile();		//attempted to delete the file
-					//					this.sendDeletedACK(Integer.parseInt(msg.split("/")[1]));		//sends delete ACK
-					//				}
 				} 
 			}
 			catch(java.lang.Exception e) { 
@@ -271,59 +204,49 @@ public class MulticastClient extends Thread{
 			}    
 			allFin=true; 
 
-			/*fix to stop program finishing after receiving hello... not nicest but works
-			 reason it was jumping was because no buffers were created in the array list so 
-			 all fin was true and the loop ended*/
+			/*fix to stop program finishing after receiving hello*/
 			if(receivingFrom.size()==0){
 				allFin=false;
 			}
 
 			else{
 				for(int i=0; i<receivingFrom.size() && receivingFrom.get(i)!=null; i++){ 
-					if(!receivingFrom.get(i).getFin() || !this.receivingFrom.get(i).isDeleted()){ 
+					if(!receivingFrom.get(i).getFin() ){ 
 						allFin=false; 
 					} 
 				}
 			}
-			/** for now*/
+			
 			if(allFin==true) terminal.println("Program finished.");
-			/** was throwing IllegalMonitorStateException, program seems to work the same without it **/
-			//			if(allFin == true){
-			//				boolean finished = false;
-			//				try {
-			//					Thread.currentThread().wait(1000);
-			//					this.multiSocket.setTimeToLive(1000);
-			//				} catch (IOException e) {
-			//					finished = true;
-			//					terminal.println("Program completed");
-			//
-			//				} catch (InterruptedException e) {
-			//					// TODO Auto-generated catch block
-			//					e.printStackTrace();
-			//				}
-			//				if(!finished){
-			//					allFin = false;
-			//				}
-			//			}
-
 		} 
 	}
+	
+	/**
+	 * function to put to sleep given a sleep time
+	 * */
+	synchronized void sleep(int time) {
+		try {this.wait(time);}catch(Exception e){e.printStackTrace();}
+	}
 
-	// method to wait for any 'not deleted' warnings.
+	/**
+	 * method to wait for any deletion warning messages from the server
+	 * a timer is set and if no warning arrives within the given time
+	 * the method terminates
+	 */
 	public boolean deletionWarnReceived() throws IOException{
 		try{
-			byte[] data= new byte[16];  // receive first packet with size of image as payload 
+			byte[] data= new byte[16]; 
 			DatagramPacket packet= new DatagramPacket(data, data.length); 
 			dataSocket.setSoTimeout(1000);
-			while(true){
+			while(true){	//receive packets until timer runs out
 				dataSocket.receive(packet);
 				String msg = new String(data, 0, packet.getLength()-1);
 				if(msg.contains("notDeleted")){
-					return false;
+					return true;
 				}
 			}
 		} catch (SocketTimeoutException e) { 
-			return true;
+			return false;
 		} 
 	}
 	/**
@@ -340,7 +263,6 @@ public class MulticastClient extends Thread{
 			}
 		}
 		if(detailIndex==this.receivingFrom.size()-1 && id != this.receivingFrom.get(detailIndex).getNodeId()){
-			//			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			terminal.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			System.exit(-1);
 		}
@@ -359,6 +281,11 @@ public class MulticastClient extends Thread{
 		} 
 
 	} 
+	
+	/**
+	 * sends a 'deleted' ACK to the server that sent the image.
+	 * a deletedACK contains 'deleted' and the id of the sending client
+	 */
 
 	public void sendDeletedACK(int id){			//a copy of sendACK with a few adjustments
 		int detailIndex;
@@ -368,11 +295,10 @@ public class MulticastClient extends Thread{
 			}
 		}
 		if(detailIndex==this.receivingFrom.size()-1 && id != this.receivingFrom.get(detailIndex).getNodeId()){
-			//			System.out.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			terminal.println("Didn't find id in receivingFrom in the sendACK() id- "+id);
 			System.exit(-1);
 		}
-		String deletedACK = "deleted";
+		String deletedACK = "deleted/"+mID;
 		DatagramPacket delPack = new DatagramPacket(deletedACK.getBytes(), deletedACK.length(), this.receivingFrom.get(detailIndex).getmAddressInet(), this.receivingFrom.get(detailIndex).getServerPort());
 		try { 
 			dataSocket.send(delPack); 
@@ -383,24 +309,12 @@ public class MulticastClient extends Thread{
 			e.printStackTrace();
 		}
 	}
-	/*public Runnable receiveMessage(){
-		byte[] buffer = new byte[MAX_BUFFER];
-		DatagramPacket packet = new DatagramPacket(buffer,	buffer.length, address, port);
-		try {
-			multiSocket.receive(packet);
-			String msg = new String(buffer, 0, packet.getLength());
-			//System.out.println("Sent - "+msg);
-			terminal.println("Received - "+msg);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		return null;
 
-	}*/
-
+	/**
+	 * receives first packet and uses the details in it to create a new buffer for data storage
+	 * @return an instance of Buffer
+	 */
 	public Buffer receiveDetails(DatagramPacket packet){
-
 		String[] details = new String(packet.getData()).split("/");										//details[0] "details"
 		for(int i = 0; i<details.length; i++){
 			terminal.println(details[i]);
@@ -410,6 +324,8 @@ public class MulticastClient extends Thread{
 		//details[2] port
 		//details[3] id
 	}
+	
+	
 	public int isInReceiveDetails(DatagramPacket packet){
 		for(int i = 0; i<this.receivingFrom.size(); i++){
 			if(this.receivingFrom.get(i).getNodeId() == Integer.parseInt(new String(packet.getData()).split("/")[1])){
@@ -419,37 +335,3 @@ public class MulticastClient extends Thread{
 		return -1;
 	}
 }
-
-/**
- * Main method
- * Start a client by creating an instance of the class MulticastClient.
- * 
- * @param args 	[0] IP address the client should send to 
- * 				[1] Port number the client should send to
- */
-//	public static void main(String[] args) {
-//
-//		int port= 0;
-//		String address=null;
-//		MulticastClient client=null;
-//
-//		System.out.println("Program start");
-//		try {
-//			if (args.length==2) {
-//				address= args[0];
-//				port= Integer.parseInt(args[1]);
-//
-//				client= new MulticastClient(address, port);
-//			}
-//			else
-//				client= new MulticastClient();
-//
-//			client.run();
-//		}	
-//		catch(Exception e) {
-//			e.printStackTrace();
-//			System.exit(-1);
-//		}
-//		System.out.println("Program end");
-//	}
-//}

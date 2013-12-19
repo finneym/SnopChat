@@ -1,7 +1,6 @@
 package snopChat;
 
 import java.awt.Dimension;
-import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -26,9 +25,9 @@ public class DisplayImage extends Thread{
 		
 		
 		try {
-			Thread.currentThread().sleep(10000);
+			Thread.currentThread();
+			Thread.sleep(10000);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		frame.setVisible(false);

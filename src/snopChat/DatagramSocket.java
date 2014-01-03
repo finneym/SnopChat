@@ -1,6 +1,10 @@
 package snopChat;
 
-
+/**
+ * Name1: Thea Johnson StudentNumber1:12307926
+ * Name2 Max Finney StudentNumber2:12307451
+ * Name3 Yana Kulizhskaya StudentNumber3:12300762
+ */
 import java.net.DatagramSocketImpl;
 import java.net.SocketException;
 import java.io.IOException;
